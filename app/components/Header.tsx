@@ -56,9 +56,8 @@ export default function Header({ onDonateClick }: HeaderProps = {}) {
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-6 md:flex lg:gap-8">
           <a href="#intro" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Home</a>
-          <a href="#about" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">About</a>
-          <a href="#features" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">What We Do</a>
-          <a href="#focus" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Focus Areas</a>
+          <Link href="/about" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">About</Link>
+          <Link href="/our-work" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Our Work</Link>
           <a href="#shop" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Shop</a>
           <a href="#contact" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Contact</a>
         </nav>
@@ -174,27 +173,20 @@ export default function Header({ onDonateClick }: HeaderProps = {}) {
             >
               Home
             </a>
-            <a
-              href="#about"
+            <Link
+              href="/about"
               onClick={() => setMobileMenuOpen(false)}
               className="rounded-lg px-4 py-3 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
             >
               About
-            </a>
-            <a
-              href="#features"
+            </Link>
+            <Link
+              href="/our-work"
               onClick={() => setMobileMenuOpen(false)}
               className="rounded-lg px-4 py-3 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
             >
-              What We Do
-            </a>
-            <a
-              href="#focus"
-              onClick={() => setMobileMenuOpen(false)}
-              className="rounded-lg px-4 py-3 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-            >
-              Focus Areas
-            </a>
+              Our Work
+            </Link>
             <a
               href="#shop"
               onClick={() => setMobileMenuOpen(false)}

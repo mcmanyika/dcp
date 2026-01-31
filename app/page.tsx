@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import ContactForm from './components/ContactForm';
 import DonationModal from './components/DonationModal';
-import { EducationIcon, AdvocacyIcon, CommunityIcon } from './components/Icons';
 
 export default function Home() {
   const [donationModalOpen, setDonationModalOpen] = useState(false)
@@ -35,7 +35,7 @@ export default function Home() {
     <main className="min-h-screen bg-white text-slate-900">
       <Header onDonateClick={() => setDonationModalOpen(true)} />
 
-      <HeroSection />
+      <HeroSection onSupportClick={() => setDonationModalOpen(true)} />
 
       {/* Stats Section */}
       <section className="border-y bg-white py-8 sm:py-12">
@@ -44,111 +44,6 @@ export default function Home() {
             <StatCard value="40+" label="Communities Reached" />
             <StatCard value="120+" label="Civic Sessions" />
             <StatCard value="300+" label="Volunteers" />
-          </div>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section id="about" className="bg-white py-12 sm:py-20 md:py-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mb-12 text-center sm:mb-16">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 sm:mb-3 sm:text-sm">About Us</p>
-            <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl">Who We Are</h2>
-          </div>
-
-          <div className="grid gap-8 md:grid-cols-2 md:items-center md:gap-12">
-            <div className="animate-fade-in-up">
-              <p className="mb-4 text-base leading-relaxed text-slate-600 sm:text-lg">
-                The Defend the Constitution Platform is a grassroots movement dedicated to opposing the ED 2030 agenda, upholding constitutional principles, and ensuring government accountability. We believe in the power of informed citizens to drive positive change through lawful, peaceful means.
-              </p>
-              <p className="mb-4 text-base leading-relaxed text-slate-600 sm:text-lg">
-                Our mission is to educate communities about the threats posed by the ED 2030 agenda, inform citizens about their constitutional rights, facilitate civic engagement, and hold public officials accountable to the rule of law. We operate through local chapters, educational programs, and advocacy initiatives.
-              </p>
-              <div className="mt-6 flex gap-4 sm:mt-8">
-                <a
-                  href="#join"
-                  className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors sm:px-6 sm:py-3"
-                >
-                  Learn More
-                </a>
-              </div>
-            </div>
-            <div className="animate-fade-in-up animate-delay-200 rounded-2xl bg-slate-50 p-4 sm:p-8">
-              <div className="aspect-video overflow-hidden rounded-xl bg-black">
-                <iframe
-                  className="h-full w-full"
-                  src="https://www.youtube.com/embed/ELdR4AaGaXM"
-                  title="About the Platform"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="bg-slate-50 py-12 sm:py-20 md:py-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mb-12 text-center sm:mb-16">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 sm:mb-3 sm:text-sm">Our Work</p>
-            <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl">What We Do</h2>
-          </div>
-
-          <div className="grid gap-6 sm:gap-8 md:grid-cols-3">
-            <FeatureCard
-              icon={<EducationIcon />}
-              title="Education"
-              description="Conducting civic education sessions, workshops, and community forums to inform citizens about the ED 2030 agenda, constitutional rights, and responsibilities."
-            />
-            <FeatureCard
-              icon={<AdvocacyIcon />}
-              title="Advocacy"
-              description="Advocating against the ED 2030 agenda while promoting transparent governance, accountability, and adherence to constitutional principles at all levels of government."
-            />
-            <FeatureCard
-              icon={<CommunityIcon />}
-              title="Community Engagement"
-              description="Building local chapters and networks to facilitate grassroots participation and collective action against the ED 2030 agenda and for constitutional governance."
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Focus Areas Section */}
-      <section id="focus" className="bg-white py-12 sm:py-20 md:py-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mb-12 text-center sm:mb-16">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 sm:mb-3 sm:text-sm">Focus Areas</p>
-            <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl">Our Campaigns</h2>
-          </div>
-
-          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <FocusCard
-              title="Opposing ED 2030 Agenda"
-              description="Leading the fight against the ED 2030 agenda and its threats to constitutional governance and individual liberties."
-            />
-            <FocusCard
-              title="Constitutional Literacy"
-              description="Promoting understanding of constitutional principles and their application in daily governance, especially in the context of ED 2030."
-            />
-            <FocusCard
-              title="Government Accountability"
-              description="Ensuring public officials are held accountable to the rule of law and constitutional mandates, resisting ED 2030 overreach."
-            />
-            <FocusCard
-              title="Civic Participation"
-              description="Encouraging active citizen engagement in democratic processes and public discourse to oppose the ED 2030 agenda."
-            />
-            <FocusCard
-              title="Legal Advocacy"
-              description="Supporting legal initiatives that uphold constitutional rights and challenge unconstitutional actions, including ED 2030 policies."
-            />
-            <FocusCard
-              title="Public Awareness"
-              description="Raising awareness about the ED 2030 agenda and constitutional issues through media, events, and digital platforms."
-            />
           </div>
         </div>
       </section>
@@ -247,8 +142,7 @@ export default function Home() {
               <h3 className="mb-4 font-semibold">Quick Links</h3>
               <ul className="space-y-2 text-sm text-slate-400">
                 <li><a href="#about" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#features" className="hover:text-white transition-colors">What We Do</a></li>
-                <li><a href="#focus" className="hover:text-white transition-colors">Focus Areas</a></li>
+                <li><Link href="/our-work" className="hover:text-white transition-colors">Our Work</Link></li>
               </ul>
             </div>
 
@@ -301,18 +195,6 @@ function StatCard({ value, label }: { value: string; label: string }) {
     <div className="animate-fade-in-scale text-center transition-all duration-300 hover:scale-105">
       <p className="mb-2 text-3xl font-bold text-slate-900 transition-colors duration-300 hover:text-slate-700 sm:text-4xl">{value}</p>
       <p className="text-xs text-slate-600 transition-colors duration-300 hover:text-slate-800 sm:text-sm">{label}</p>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
-  return (
-    <div className="group animate-fade-in-scale rounded-2xl bg-white p-6 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-lg sm:p-8">
-      <div className="mb-4 text-slate-900 transition-transform duration-300 group-hover:scale-110 group-hover:text-slate-700">
-        {icon}
-      </div>
-      <h3 className="mb-3 text-lg font-bold transition-colors duration-300 group-hover:text-slate-900 sm:text-xl">{title}</h3>
-      <p className="text-sm text-slate-600 transition-colors duration-300 group-hover:text-slate-700 sm:text-base">{description}</p>
     </div>
   );
 }
