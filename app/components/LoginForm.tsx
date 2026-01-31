@@ -117,7 +117,8 @@ export default function LoginForm() {
         {loading ? 'Signing in...' : 'Sign In'}
       </button>
 
-      <div className="relative">
+      {/* Google Sign-in temporarily hidden */}
+      {/* <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-slate-300"></div>
         </div>
@@ -133,7 +134,7 @@ export default function LoginForm() {
         className="w-full rounded-lg border-2 border-slate-300 px-6 py-3 text-sm font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed sm:text-base"
       >
         {loading ? 'Signing in...' : 'Sign in with Google'}
-      </button>
+      </button> */}
     </form>
   )
 }
