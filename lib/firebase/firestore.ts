@@ -12,7 +12,7 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import { db } from './config'
-import type { UserProfile, Donation, Membership, ContactSubmission, Purchase, Product, UserRole, News } from '@/types'
+import type { UserProfile, Donation, Membership, ContactSubmission, Purchase, Product, UserRole, News, CartItem } from '@/types'
 
 // Helper functions
 function requireDb() {
@@ -756,5 +756,77 @@ export async function deleteNews(newsId: string): Promise<void> {
   await updateDoc(doc(requireDb(), 'news', newsId), { isPublished: false })
   // Or use deleteDoc if you want to permanently delete:
   // await deleteDoc(doc(requireDb(), 'news', newsId))
+}
+
+// Cart operations
+export async function saveUserCart(userId: string, cartItems: CartItem[]): Promise<void> {
+  const cartData = {
+    items: cartItems.map(item => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      // Store minimal product data for reference
+      product: {
+        id: item.product.id,
+        name: item.product.name,
+        price: item.product.price,
+        image: item.product.image,
+        description: item.product.description,
+        stock: item.product.stock,
+        lowStockThreshold: item.product.lowStockThreshold,
+        isActive: item.product.isActive,
+      },
+    })),
+    updatedAt: Timestamp.now(),
+  }
+  
+  await setDoc(doc(requireDb(), 'carts', userId), cartData, { merge: true })
+}
+
+export async function getUserCart(userId: string): Promise<CartItem[]> {
+  try {
+    const cartDoc = await getDoc(doc(requireDb(), 'carts', userId))
+    if (!cartDoc.exists()) return []
+    
+    const cartData = cartDoc.data()
+    const items = cartData.items || []
+    
+    // Fetch full product data for each cart item
+    const cartItems: CartItem[] = []
+    for (const item of items) {
+      try {
+        const productDoc = await getDoc(doc(requireDb(), 'products', item.productId))
+        if (productDoc.exists()) {
+          const productData = productDoc.data()
+          cartItems.push({
+            productId: item.productId,
+            product: {
+              id: productData.id || productDoc.id,
+              name: productData.name,
+              description: productData.description,
+              price: productData.price,
+              image: productData.image,
+              stock: productData.stock,
+              lowStockThreshold: productData.lowStockThreshold,
+              isActive: productData.isActive,
+              createdAt: toDate(productData.createdAt),
+              updatedAt: toDate(productData.updatedAt),
+            },
+            quantity: item.quantity,
+          })
+        }
+      } catch (error) {
+        console.error(`Error loading product ${item.productId}:`, error)
+      }
+    }
+    
+    return cartItems
+  } catch (error) {
+    console.error('Error loading user cart:', error)
+    return []
+  }
+}
+
+export async function clearUserCart(userId: string): Promise<void> {
+  await setDoc(doc(requireDb(), 'carts', userId), { items: [], updatedAt: Timestamp.now() }, { merge: true })
 }
 

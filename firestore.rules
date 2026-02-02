@@ -146,6 +146,12 @@ service cloud.firestore {
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
+
+    // Carts collection
+    match /carts/{userId} {
+      // Users can only read and write their own cart
+      allow read, write: if isOwner(userId);
+    }
   }
 }
 

@@ -1,6 +1,8 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { getUserCart, saveUserCart, clearUserCart } from '@/lib/firebase/firestore'
 import type { CartItem, Product } from '@/types'
 
 interface CartContextType {
@@ -16,36 +18,136 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user, loading: authLoading } = useAuth()
   const [items, setItems] = useState<CartItem[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const isSyncingRef = useRef(false)
+  const hasLoadedRef = useRef(false)
 
-  // Load cart from localStorage on mount
+  // Load cart from localStorage immediately on mount (before auth loads)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const savedCart = localStorage.getItem('cart')
-        if (savedCart) {
-          const parsedCart = JSON.parse(savedCart)
-          setItems(parsedCart)
-        }
-      } catch (error) {
-        console.error('Error loading cart from localStorage:', error)
-      } finally {
-        setIsLoaded(true)
+    if (hasLoadedRef.current || typeof window === 'undefined') return
+    
+    try {
+      const savedCart = localStorage.getItem('dcp_cart')
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart)
+        setItems(parsedCart)
       }
+      setIsLoaded(true)
+      hasLoadedRef.current = true
+    } catch (error) {
+      console.error('Error loading cart from localStorage:', error)
+      setIsLoaded(true)
+      hasLoadedRef.current = true
     }
   }, [])
 
-  // Save cart to localStorage whenever it changes
+  // Load cart from Firestore when auth is ready and user is logged in
   useEffect(() => {
-    if (isLoaded && typeof window !== 'undefined') {
+    if (authLoading || !user || isSyncingRef.current) return
+    
+    const loadCartFromFirestore = async () => {
       try {
-        localStorage.setItem('cart', JSON.stringify(items))
+        isSyncingRef.current = true
+        const firestoreCart = await getUserCart(user.uid)
+        
+        // Also check localStorage for items added before login
+        let localCart: CartItem[] = []
+        if (typeof window !== 'undefined') {
+          try {
+            const savedCart = localStorage.getItem('dcp_cart')
+            if (savedCart) {
+              localCart = JSON.parse(savedCart)
+            }
+          } catch (error) {
+            console.error('Error loading local cart:', error)
+          }
+        }
+
+        // Merge carts: combine items, preferring Firestore quantities for duplicates
+        const mergedCart: CartItem[] = []
+        const productMap = new Map<string, CartItem>()
+
+        // Add Firestore items first (these take precedence)
+        firestoreCart.forEach(item => {
+          productMap.set(item.productId, item)
+          mergedCart.push(item)
+        })
+
+        // Add local items that aren't in Firestore
+        localCart.forEach(localItem => {
+          if (!productMap.has(localItem.productId)) {
+            mergedCart.push(localItem)
+          }
+        })
+
+        setItems(mergedCart)
+        
+        // Save merged cart to Firestore and clear localStorage
+        if (mergedCart.length > 0) {
+          await saveUserCart(user.uid, mergedCart)
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('dcp_cart')
+          }
+        } else {
+          // Clear localStorage if cart is empty
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('dcp_cart')
+          }
+        }
       } catch (error) {
-        console.error('Error saving cart to localStorage:', error)
+        console.error('Error loading cart from Firestore:', error)
+        // Keep localStorage cart if Firestore fails
+      } finally {
+        isSyncingRef.current = false
       }
     }
-  }, [items, isLoaded])
+
+    loadCartFromFirestore()
+  }, [user, authLoading])
+
+  // Save cart to Firestore (if user is logged in) or localStorage (if not)
+  useEffect(() => {
+    if (!isLoaded || isSyncingRef.current || authLoading) return
+
+    const saveCart = async () => {
+      if (user) {
+        // User is logged in - save to Firestore
+        try {
+          isSyncingRef.current = true
+          await saveUserCart(user.uid, items)
+          // Clear localStorage when user is logged in
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('dcp_cart')
+          }
+        } catch (error) {
+          console.error('Error saving cart to Firestore:', error)
+          // Fallback to localStorage if Firestore fails
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('dcp_cart', JSON.stringify(items))
+            } catch (e) {
+              console.error('Error saving cart to localStorage:', e)
+            }
+          }
+        } finally {
+          isSyncingRef.current = false
+        }
+      } else {
+        // No user - save to localStorage
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('dcp_cart', JSON.stringify(items))
+          } catch (error) {
+            console.error('Error saving cart to localStorage:', error)
+          }
+        }
+      }
+    }
+
+    saveCart()
+  }, [items, isLoaded, user, authLoading])
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setItems((prevItems) => {
@@ -99,8 +201,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const clearCart = () => {
+  const clearCart = async () => {
     setItems([])
+    if (user) {
+      try {
+        await clearUserCart(user.uid)
+      } catch (error) {
+        console.error('Error clearing cart from Firestore:', error)
+      }
+    }
   }
 
   const getTotalItems = () => {

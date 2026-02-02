@@ -86,8 +86,8 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
           willChange: 'transform',
         }}
       />
-      {/* Dark overlay for better text visibility */}
-      <div className="absolute inset-0 z-[1] bg-black/40" />
+      {/* Light overlay for better text visibility */}
+      <div className="absolute inset-0 z-[1] bg-black/5" />
       {/* Content layer */}
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-12 text-center sm:px-6 sm:pb-20">
         <div className="relative">
@@ -120,19 +120,19 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
         <div className="flex animate-fade-in-up animate-delay-300 flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
           <a
             href="/signup"
-            className="inline-flex w-full items-center justify-center rounded-lg border-2 border-white bg-white/10 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.5)] hover:bg-white/20 transition-colors sm:w-auto sm:px-8 sm:py-4 sm:text-base"
+            className="inline-flex w-full items-center justify-center rounded-lg border-2 border-white bg-slate-900/90 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.5)] hover:bg-slate-800/90 transition-colors sm:w-auto sm:px-8 sm:py-4 sm:text-base"
           >
             Join The Movement
           </a>
           <a
             href="#peoples-resolution"
-            className="inline-flex w-full items-center justify-center rounded-lg border-2 border-white bg-white/10 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.5)] hover:bg-white/20 transition-colors sm:w-auto sm:px-8 sm:py-4 sm:text-base"
+            className="inline-flex w-full items-center justify-center rounded-lg border-2 border-white bg-slate-900/90 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.5)] hover:bg-slate-800/90 transition-colors sm:w-auto sm:px-8 sm:py-4 sm:text-base"
           >
             Sign the People's Resolution
           </a>
           <button
             onClick={onSupportClick}
-            className="inline-flex w-full items-center justify-center rounded-lg border-2 border-white bg-white/10 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.5)] hover:bg-white/20 transition-colors sm:w-auto sm:px-8 sm:py-4 sm:text-base"
+            className="inline-flex w-full items-center justify-center rounded-lg border-2 border-white bg-slate-900/90 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.5)] hover:bg-slate-800/90 transition-colors sm:w-auto sm:px-8 sm:py-4 sm:text-base"
           >
             Support the Work
           </button>
