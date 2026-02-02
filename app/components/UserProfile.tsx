@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { getMembershipByUser } from '@/lib/firebase/firestore'
 
 export default function UserProfile() {
   const { user, userProfile, updateProfile } = useAuth()
   const [name, setName] = useState('')
+  const [membershipTier, setMembershipTier] = useState<string>('free')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -16,6 +18,37 @@ export default function UserProfile() {
       setName(userProfile.name)
     }
   }, [userProfile])
+
+  // Fetch actual membership tier from memberships collection
+  useEffect(() => {
+    const fetchMembership = async () => {
+      if (!user) return
+      
+      try {
+        const membership = await getMembershipByUser(user.uid)
+        if (membership && membership.status === 'succeeded') {
+          setMembershipTier(membership.tier)
+        } else {
+          // Fall back to userProfile if no active membership
+          setMembershipTier(userProfile?.membershipTier || 'free')
+        }
+      } catch (err) {
+        console.error('Error fetching membership:', err)
+        setMembershipTier(userProfile?.membershipTier || 'free')
+      }
+    }
+
+    fetchMembership()
+
+    // Refresh membership when component becomes visible (e.g., after returning from payment)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user) {
+        fetchMembership()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [user, userProfile?.membershipTier])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,7 +122,7 @@ export default function UserProfile() {
             Membership Tier
           </label>
           <div className="rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm capitalize text-slate-600 sm:text-base">
-            {userProfile?.membershipTier || 'Free'}
+            {membershipTier === 'free' ? 'Free' : membershipTier}
           </div>
         </div>
 
