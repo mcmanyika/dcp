@@ -37,7 +37,7 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
     {
       title: "UNITED FOR CHANGE.",
       titleSecondary: "BUILDING TOMORROW.",
-      subtitle: "Empowering Citizens for Change",
+      subtitle: "A Movement for Lawful Governance",
       description: "Join thousands of citizens working together to oppose the ED 2030 agenda, defend the Constitution, and protect our democratic values for future generations.",
     },
   ];
@@ -86,18 +86,24 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
       id="intro"
       className="relative flex min-h-screen items-end justify-center overflow-hidden pt-16 sm:pt-20"
     >
-      {/* Background with parallax */}
-      <div
-        className="absolute inset-0 z-0 transition-opacity duration-1000"
-        style={{
-          backgroundImage: `url(${backgroundImages[currentBgImage]})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          transform: `translateY(${parallaxOffset}px)`,
-          willChange: 'transform',
-        }}
-      />
+      {/* Background with parallax - smooth crossfade */}
+      {backgroundImages.map((image, index) => (
+        <div
+          key={image}
+          className="absolute inset-0 z-0 transition-opacity duration-[3000ms] ease-in-out"
+          style={{
+            backgroundImage: `url(${image})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            transform: `translateY(${parallaxOffset}px)`,
+            willChange: 'transform, opacity',
+            opacity: index === currentBgImage ? 1 : 0,
+            pointerEvents: index === currentBgImage ? 'auto' : 'none',
+            transition: 'opacity 3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        />
+      ))}
       {/* Light overlay for better text visibility */}
       <div className="absolute inset-0 z-[1] bg-black/5" />
       {/* Content layer */}

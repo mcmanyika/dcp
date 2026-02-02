@@ -239,6 +239,12 @@ function ProductsManagement() {
     }
   }
 
+  // Calculate pagination values
+  const totalPages = Math.ceil(products.length / productsPerPage)
+  const startIndex = (currentPage - 1) * productsPerPage
+  const endIndex = startIndex + productsPerPage
+  const currentProducts = products.slice(startIndex, endIndex)
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -329,14 +335,7 @@ function ProductsManagement() {
                 </td>
               </tr>
             ) : (
-              (() => {
-                // Calculate pagination
-                const totalPages = Math.ceil(products.length / productsPerPage)
-                const startIndex = (currentPage - 1) * productsPerPage
-                const endIndex = startIndex + productsPerPage
-                const currentProducts = products.slice(startIndex, endIndex)
-
-                return currentProducts.map((product) => {
+              currentProducts.map((product) => {
                   const isLowStock = product.stock <= product.lowStockThreshold && product.stock > 0
                   const isOutOfStock = product.stock === 0
 
@@ -411,19 +410,13 @@ function ProductsManagement() {
                     </tr>
                   )
                 })
-              })()
             )}
           </tbody>
         </table>
       </div>
 
       {/* Pagination */}
-      {products.length > productsPerPage && (() => {
-        const totalPages = Math.ceil(products.length / productsPerPage)
-        const startIndex = (currentPage - 1) * productsPerPage
-        const endIndex = startIndex + productsPerPage
-
-        return (
+      {products.length > productsPerPage && (
           <div className="mt-6 flex items-center justify-between">
             <div className="text-sm text-slate-600">
               Showing {startIndex + 1} to {Math.min(endIndex, products.length)} of {products.length} products
@@ -481,68 +474,6 @@ function ProductsManagement() {
               </button>
             </div>
           </div>
-        )
-      })()}
-
-      {/* Pagination */}
-      {products.length > productsPerPage && (
-        <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-slate-600">
-            Showing {startIndex + 1} to {Math.min(endIndex, products.length)} of {products.length} products
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-
-            <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                // Show first page, last page, current page, and pages around current
-                if (
-                  page === 1 ||
-                  page === totalPages ||
-                  (page >= currentPage - 1 && page <= currentPage + 1)
-                ) {
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                        currentPage === page
-                          ? 'bg-slate-900 text-white'
-                          : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  )
-                } else if (
-                  page === currentPage - 2 ||
-                  page === currentPage + 2
-                ) {
-                  return (
-                    <span key={page} className="px-1 text-xs text-slate-400">
-                      ...
-                    </span>
-                  )
-                }
-                return null
-              })}
-            </div>
-
-            <button
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
-        </div>
       )}
 
       {/* Add/Edit Modal */}
