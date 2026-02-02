@@ -16,6 +16,7 @@ const navItems = [
 const adminNavItems = [
   { href: '/dashboard/admin/users', label: 'Users' },
   { href: '/dashboard/admin/products', label: 'Products' },
+  { href: '/dashboard/admin/orders', label: 'Orders' },
   { href: '/dashboard/admin/news', label: 'News' },
   { href: '/dashboard/admin/petitions', label: 'Petitions' },
   { href: '/dashboard/admin/volunteers', label: 'Volunteers' },

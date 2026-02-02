@@ -53,6 +53,8 @@ service cloud.firestore {
 
     // Purchases collection
     match /purchases/{purchaseId} {
+      // Admins can read all purchases (both get and list operations)
+      allow read: if isAdmin();
       // Users can read their own purchases
       allow read: if isAuthenticated() && 
         resource.data.userId == request.auth.uid;
@@ -70,8 +72,9 @@ service cloud.firestore {
                       request.resource.data.stripePaymentIntentId is string &&
                       request.resource.data.stripePaymentIntentId.size() > 0 &&
                       request.resource.data.amount > 0);
-      // Admins can read all purchases
-      allow read: if isAdmin();
+      // Admins can update purchase status, shipment status, and tracking number
+      allow update: if isAdmin() &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'shipmentStatus', 'trackingNumber', 'updatedAt']);
     }
 
     // Memberships collection

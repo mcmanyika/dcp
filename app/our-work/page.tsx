@@ -1,8 +1,6 @@
 'use client'
 
 import Header from '../components/Header';
-import { EducationIcon, AdvocacyIcon, CommunityIcon } from '../components/Icons';
-import type { ReactNode } from 'react';
 import Link from 'next/link';
 
 export default function OurWorkPage() {
@@ -23,28 +21,6 @@ export default function OurWorkPage() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="bg-white py-8 sm:py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid gap-6 sm:gap-8 md:grid-cols-3">
-            <FeatureCard
-              icon={<EducationIcon />}
-              title="Education"
-              description="Conducting civic education sessions, workshops, and community forums to inform citizens about the ED 2030 agenda, constitutional rights, and responsibilities."
-            />
-            <FeatureCard
-              icon={<AdvocacyIcon />}
-              title="Advocacy"
-              description="Advocating against the ED 2030 agenda while promoting transparent governance, accountability, and adherence to constitutional principles at all levels of government."
-            />
-            <FeatureCard
-              icon={<CommunityIcon />}
-              title="Community Engagement"
-              description="Building local chapters and networks to facilitate grassroots participation and collective action against the ED 2030 agenda and for constitutional governance."
-            />
-          </div>
-        </div>
-      </section>
 
       {/* Additional Content Section */}
       <section className="bg-slate-50 py-8 sm:py-12">
@@ -152,15 +128,4 @@ export default function OurWorkPage() {
   );
 }
 
-function FeatureCard({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
-  return (
-    <div className="group rounded-lg bg-white p-4 shadow-sm transition-all duration-300 hover:border-slate-900 hover:shadow-md sm:p-5 border border-slate-200">
-      <div className="mb-3 text-slate-900 transition-transform duration-300 group-hover:scale-110 group-hover:text-slate-700">
-        {icon}
-      </div>
-      <h3 className="mb-2 text-base font-bold transition-colors duration-300 group-hover:text-slate-900 sm:text-lg">{title}</h3>
-      <p className="text-xs text-slate-600 transition-colors duration-300 group-hover:text-slate-700 sm:text-sm leading-relaxed">{description}</p>
-    </div>
-  );
-}
 

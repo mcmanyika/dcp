@@ -116,7 +116,7 @@ function PetitionCard({ petition, onSign }: { petition: Petition; onSign: () => 
     }
   }
 
-  const hasSigned = user?.uid && petition.signatures.some((sig) => sig.userId === user.uid)
+  const hasSigned = Boolean(user?.uid && petition.signatures.some((sig) => sig.userId === user.uid))
 
   return (
     <>

@@ -12,7 +12,7 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import { db } from './config'
-import type { UserProfile, Donation, Membership, ContactSubmission, Purchase, Product, UserRole, News, CartItem, VolunteerApplication, VolunteerApplicationStatus, Petition, PetitionSignature } from '@/types'
+import type { UserProfile, Donation, Membership, ContactSubmission, Purchase, Product, UserRole, News, CartItem, VolunteerApplication, VolunteerApplicationStatus, Petition, PetitionSignature, ShipmentStatus } from '@/types'
 
 // Helper functions
 function requireDb() {
@@ -178,21 +178,17 @@ export async function updateDonationStatus(
 
 // Membership operations
 export async function createMembership(
-  membership: Omit<Membership, 'id'>
+  membership: Omit<Membership, 'id' | 'createdAt'>
 ): Promise<string> {
   const db = requireDb()
   const membershipRef = doc(collection(db, 'memberships'))
 
   try {
-    // Convert createdAt to Timestamp if it's a Date object
+    // createdAt is automatically set to now
     const membershipData = {
       ...membership,
       id: membershipRef.id,
-      createdAt: membership.createdAt instanceof Date
-        ? Timestamp.fromDate(membership.createdAt)
-        : membership.createdAt instanceof Timestamp
-          ? membership.createdAt
-          : Timestamp.now(),
+      createdAt: Timestamp.now(),
     }
 
     await setDoc(membershipRef, membershipData)
@@ -331,15 +327,12 @@ export async function updateMembership(
   membershipId: string,
   data: Partial<Membership>
 ): Promise<void> {
-  const updateData: any = { ...data }
-  if (data.endDate) {
-    const endDate = data.endDate instanceof Date
-      ? data.endDate
-      : typeof data.endDate === 'string'
-        ? new Date(data.endDate)
-        : toDate(data.endDate)
-    updateData.endDate = Timestamp.fromDate(endDate)
-  }
+  const updateData: any = {}
+  
+  if (data.tier !== undefined) updateData.tier = data.tier
+  if (data.status !== undefined) updateData.status = data.status
+  if (data.stripePaymentIntentId !== undefined) updateData.stripePaymentIntentId = data.stripePaymentIntentId
+  
   await updateDoc(doc(requireDb(), 'memberships', membershipId), updateData)
 }
 
@@ -529,7 +522,7 @@ export async function updateVolunteerApplicationStatus(
 }
 
 // Purchase operations
-export async function createPurchase(purchase: Omit<Purchase, 'id' | 'createdAt'>): Promise<string> {
+export async function createPurchase(purchase: Omit<Purchase, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   const db = requireDb()
   const purchaseRef = doc(collection(db, 'purchases'))
   try {
@@ -540,10 +533,13 @@ export async function createPurchase(purchase: Omit<Purchase, 'id' | 'createdAt'
       amount: purchase.amount,
       currency: purchase.currency || 'usd',
       status: purchase.status,
+      shipmentStatus: purchase.shipmentStatus || 'pending',
+      trackingNumber: purchase.trackingNumber || null,
       stripePaymentIntentId: purchase.stripePaymentIntentId,
       description: purchase.description || null,
       id: purchaseRef.id,
       createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     }
 
     await setDoc(purchaseRef, purchaseData)
@@ -596,7 +592,9 @@ export async function getPurchasesByUser(userId: string): Promise<Purchase[]> {
           const data = doc.data()
           return {
             ...data,
+            id: doc.id,
             createdAt: toDate(data.createdAt),
+            updatedAt: data.updatedAt ? toDate(data.updatedAt) : undefined,
           } as Purchase
         })
         // Sort in memory
@@ -626,14 +624,92 @@ export async function getPurchaseById(purchaseId: string): Promise<Purchase | nu
   if (!purchaseDoc.exists()) return null
 
   const data = purchaseDoc.data()
-  return { ...data, createdAt: toDate(data.createdAt) } as Purchase
+  return { 
+    ...data, 
+    createdAt: toDate(data.createdAt),
+    updatedAt: data.updatedAt ? toDate(data.updatedAt) : undefined,
+  } as Purchase
 }
 
 export async function updatePurchaseStatus(
   purchaseId: string,
   status: Purchase['status']
 ): Promise<void> {
-  await updateDoc(doc(requireDb(), 'purchases', purchaseId), { status })
+  await updateDoc(doc(requireDb(), 'purchases', purchaseId), { 
+    status,
+    updatedAt: Timestamp.now(),
+  })
+}
+
+export async function updatePurchase(
+  purchaseId: string,
+  data: Partial<Pick<Purchase, 'status' | 'shipmentStatus' | 'trackingNumber'>>
+): Promise<void> {
+  const updateData: any = {
+    updatedAt: Timestamp.now(),
+  }
+  
+  if (data.status !== undefined) updateData.status = data.status
+  if (data.shipmentStatus !== undefined) updateData.shipmentStatus = data.shipmentStatus
+  if (data.trackingNumber !== undefined) {
+    if (data.trackingNumber !== '') {
+      updateData.trackingNumber = data.trackingNumber
+    } else {
+      updateData.trackingNumber = null
+    }
+  }
+  
+  await updateDoc(doc(requireDb(), 'purchases', purchaseId), updateData)
+}
+
+export async function getAllPurchases(): Promise<Purchase[]> {
+  if (!db) {
+    console.warn('Firestore not initialized')
+    return []
+  }
+
+  try {
+    const q = query(
+      collection(db, 'purchases'),
+      orderBy('createdAt', 'desc')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        ...data,
+        id: doc.id,
+        createdAt: toDate(data.createdAt),
+        updatedAt: data.updatedAt ? toDate(data.updatedAt) : undefined,
+      } as Purchase
+    })
+  } catch (error: any) {
+    console.error('Error fetching all purchases:', error)
+    // Fallback without orderBy
+    if (error?.code === 'failed-precondition') {
+      try {
+        const snapshot = await getDocs(collection(db, 'purchases'))
+        const purchases = snapshot.docs.map((doc) => {
+          const data = doc.data()
+          return {
+            ...data,
+            id: doc.id,
+            createdAt: toDate(data.createdAt),
+            updatedAt: data.updatedAt ? toDate(data.updatedAt) : undefined,
+          } as Purchase
+        })
+        return purchases.sort((a, b) => {
+          const aDate = a.createdAt instanceof Date ? a.createdAt.getTime() : 0
+          const bDate = b.createdAt instanceof Date ? b.createdAt.getTime() : 0
+          return bDate - aDate
+        })
+      } catch (fallbackError: any) {
+        console.error('Error in fallback query:', fallbackError)
+        return []
+      }
+    }
+    return []
+  }
 }
 
 // Product operations

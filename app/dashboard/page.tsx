@@ -354,10 +354,10 @@ function DashboardContent() {
                     return (
                       <div
                         key={purchase.id}
-                        className="grid grid-cols-4 gap-4 items-center rounded-lg border border-slate-200 p-4 hover:bg-slate-50 transition-colors"
+                        className="grid grid-cols-5 gap-3 items-center rounded-lg border border-slate-200 p-3 hover:bg-slate-50 transition-colors"
                       >
                         {/* Product Image */}
-                        <div className="h-16 w-16 rounded-lg bg-slate-100 overflow-hidden">
+                        <div className="h-12 w-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
                           <img
                             src={productImage}
                             alt={purchase.productName}
@@ -371,23 +371,21 @@ function DashboardContent() {
 
                         {/* Product Details */}
                         <div className="min-w-0">
-                          <h3 className="font-semibold text-slate-900 truncate">{purchase.productName}</h3>
+                          <h3 className="font-semibold text-sm text-slate-900 truncate">{purchase.productName}</h3>
                           {purchase.description && (
-                            <p className="text-xs text-slate-500 mt-1 truncate">{purchase.description}</p>
+                            <p className="text-xs text-slate-500 mt-0.5 truncate">{purchase.description}</p>
                           )}
                         </div>
 
                         {/* Purchase Date */}
-                        <div className="text-sm text-slate-600">
-                          <p className="font-medium text-slate-500 text-xs mb-1">Purchase Date</p>
+                        <div className="text-xs text-slate-600">
+                          <p className="font-medium text-slate-500 text-[10px] mb-0.5">Purchase Date</p>
                           <p>{formatDate(purchaseDate)}</p>
                         </div>
 
-                        {/* Price and Status */}
-                        <div className="text-right">
-                          <p className="font-semibold text-slate-900 mb-1">
-                            ${purchase.amount.toFixed(2)}
-                          </p>
+                        {/* Status */}
+                        <div>
+                          <p className="font-medium text-slate-500 text-[10px] mb-1">Status</p>
                           <div
                             className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
                               purchase.status === 'succeeded'
@@ -399,6 +397,30 @@ function DashboardContent() {
                           >
                             {purchase.status}
                           </div>
+                          {purchase.shipmentStatus && (
+                            <div className="mt-1">
+                              <div
+                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                  purchase.shipmentStatus === 'delivered'
+                                    ? 'bg-green-100 text-green-700'
+                                    : purchase.shipmentStatus === 'shipped'
+                                    ? 'bg-purple-100 text-purple-700'
+                                    : purchase.shipmentStatus === 'processing'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-yellow-100 text-yellow-700'
+                                }`}
+                              >
+                                {purchase.shipmentStatus}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Price */}
+                        <div className="text-right">
+                          <p className="font-semibold text-sm text-slate-900">
+                            ${purchase.amount.toFixed(2)}
+                          </p>
                         </div>
                       </div>
                     )

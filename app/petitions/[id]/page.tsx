@@ -110,7 +110,7 @@ export default function PetitionDetailPage() {
 
   const progress = Math.min((petition.currentSignatures / petition.goal) * 100, 100)
   const hasExpired = petition.expiresAt && new Date(petition.expiresAt instanceof Date ? petition.expiresAt : (petition.expiresAt as any)?.toDate?.() || new Date()) < new Date()
-  const hasSigned = user?.uid && petition.signatures.some((sig) => sig.userId === user.uid)
+  const hasSigned = Boolean(user?.uid && petition.signatures.some((sig) => sig.userId === user.uid))
 
   return (
     <div className="min-h-screen bg-slate-50">

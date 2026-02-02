@@ -4,6 +4,7 @@ export type UserRole = 'supporter' | 'member' | 'moderator' | 'admin'
 export type MembershipTier = 'free' | 'basic' | 'premium' | 'champion'
 export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'canceled'
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'incomplete'
+export type ShipmentStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
 
 export interface UserProfile {
   uid: string
@@ -54,8 +55,11 @@ export interface Purchase {
   amount: number
   currency: string
   status: PaymentStatus
+  shipmentStatus?: ShipmentStatus
+  trackingNumber?: string
   stripePaymentIntentId: string
   createdAt: Timestamp | Date
+  updatedAt?: Timestamp | Date
   description?: string
 }
 
