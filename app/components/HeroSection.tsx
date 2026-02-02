@@ -72,7 +72,7 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentBgImage((prev) => (prev + 1) % backgroundImages.length);
-    }, 8000); // Change background every 8 seconds (same as text slides)
+    }, 12000); // Change background every 12 seconds
 
     return () => clearInterval(interval);
   }, [backgroundImages.length]);
