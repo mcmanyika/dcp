@@ -69,7 +69,7 @@ export default function PetitionsPage() {
               <p className="text-slate-600">No active petitions at this time.</p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2">
               {petitions.map((petition) => (
                 <PetitionCard key={petition.id} petition={petition} onSign={loadPetitions} />
               ))}

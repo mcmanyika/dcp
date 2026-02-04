@@ -44,7 +44,7 @@ export default function DonationModal({ isOpen, onClose }: DonationModalProps) {
           <div>
             <h2 className="text-2xl font-bold">Make a Donation</h2>
             <p className="mt-1 text-sm text-slate-600">
-              Your contribution helps us continue our mission to oppose the ED 2030 agenda
+              Your contribution helps us continue our mission to oppose the 2030 agenda
             </p>
           </div>
           <button

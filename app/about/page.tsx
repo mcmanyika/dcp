@@ -185,7 +185,7 @@ export default function AboutPage() {
                 </div>
               </div>
               <p className="text-sm text-slate-400">
-                A citizen-led movement opposing the ED 2030 agenda, promoting lawful governance, public accountability, and peaceful civic participation.
+                A citizen-led movement opposing the 2030 agenda, promoting lawful governance, public accountability, and peaceful civic participation.
               </p>
             </div>
 

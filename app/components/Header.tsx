@@ -47,9 +47,11 @@ export default function Header({ onDonateClick }: HeaderProps) {
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-800 bg-black backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 sm:px-6">
         <Link href="/" className="flex items-center gap-1.5 sm:gap-2 hover:opacity-80 transition-opacity">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-white text-xs font-bold text-black sm:h-8 sm:w-8">
-            DCP
-          </div>
+          <img 
+            src="/images/logo.png" 
+            alt="DCP Logo" 
+            className="h-11 w-11 rounded-md object-contain sm:h-12 sm:w-12"
+          />
           <div className="leading-tight hidden sm:block">
             <p className="text-xs font-bold text-white">Defend the Constitution</p>
             <p className="text-[10px] text-slate-400">Platform</p>

@@ -233,7 +233,7 @@ export default function Home() {
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <h2 className="mb-3 text-2xl font-bold sm:text-3xl md:text-4xl">Ready to Make a Difference?</h2>
           <p className="mb-6 text-sm text-slate-300 sm:text-base">
-            Join thousands of citizens working together to oppose the ED 2030 agenda, defend the Constitution, and protect our democratic values.
+            Join thousands of citizens working together to oppose the 2030 agenda, defend the Constitution, and protect our democratic values.
           </p>
           <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
             <Link
@@ -474,7 +474,6 @@ export default function Home() {
       <section id="contact" className="bg-white py-8 sm:py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mb-6 text-center sm:mb-8">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Get in Touch</p>
             <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">Contact Us</h2>
           </div>
 
@@ -495,16 +494,18 @@ export default function Home() {
           <div className="grid gap-6 md:grid-cols-4">
             <div>
               <div className="mb-3 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-xs font-bold text-black">
-                  DCP
-                </div>
+                <img 
+                  src="/images/logo.png" 
+                  alt="DCP Logo" 
+                  className="h-10 w-10 rounded-md object-contain"
+                />
                 <div>
                   <p className="text-xs font-bold">Defend the Constitution</p>
                   <p className="text-[10px] text-slate-400">Platform</p>
                 </div>
               </div>
               <p className="text-xs text-slate-400">
-                A citizen-led movement opposing the ED 2030 agenda, promoting lawful governance, public accountability, and peaceful civic participation.
+                A citizen-led movement opposing the 2030 agenda, promoting lawful governance, public accountability, and peaceful civic participation.
               </p>
             </div>
 

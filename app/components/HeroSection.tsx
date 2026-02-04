@@ -38,7 +38,7 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
       title: "UNITED FOR CHANGE.",
       titleSecondary: "BUILDING TOMORROW.",
       subtitle: "A Movement for Lawful Governance",
-      description: "Join thousands of citizens working together to oppose the ED 2030 agenda, defend the Constitution, and protect our democratic values for future generations.",
+      description: "Join thousands of citizens working together to oppose the 2030 agenda, defend the Constitution, and protect our democratic values for future generations.",
     },
   ];
 

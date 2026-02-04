@@ -29,20 +29,20 @@ export default function ResourcesPage() {
             <div>
               <h2 className="text-2xl font-bold">Educational Resources</h2>
               <p className="mt-1 text-sm text-slate-600">
-                Access educational materials, guides, and information about the ED 2030 agenda and constitutional rights
+                Access educational materials, guides, and information about the 2030 agenda and constitutional rights
               </p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <ResourceCard
                 title="Constitutional Rights Guide"
-                description="Learn about your constitutional rights and how they apply in the context of ED 2030"
+                description="Learn about your constitutional rights and how they apply in the context of 2030"
                 icon="📚"
                 href="#"
               />
               <ResourceCard
-                title="ED 2030 Information"
-                description="Comprehensive information about the ED 2030 agenda and its implications"
+                title="2030 Information"
+                description="Comprehensive information about the 2030 agenda and its implications"
                 icon="📋"
                 href="#"
               />
