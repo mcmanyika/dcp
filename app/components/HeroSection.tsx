@@ -10,6 +10,7 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
   const [scrollY, setScrollY] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentBgImage, setCurrentBgImage] = useState(0);
+  const [showContent, setShowContent] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
   
   const backgroundImages = ['/images/banner.png', '/images/banner-2.png'];
@@ -51,6 +52,8 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
         if (rect.bottom > 0 && rect.top < window.innerHeight) {
           setScrollY(scrolled);
         }
+        // Show content when header moves to top (after scrolling 100px)
+        setShowContent(scrolled > 100);
       }
     };
 
@@ -84,7 +87,7 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
     <section
       ref={heroRef}
       id="intro"
-      className="relative flex min-h-screen items-end justify-center overflow-hidden pt-16 sm:pt-20"
+      className="relative flex min-h-screen items-end justify-center overflow-hidden pb-20"
     >
       {/* Background with parallax - smooth crossfade */}
       {backgroundImages.map((image, index) => (
@@ -106,8 +109,10 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
       ))}
       {/* Dark overlay for better text visibility */}
       <div className="absolute inset-0 z-[1] bg-black/20" />
-      {/* Content layer */}
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-12 text-center sm:px-6 sm:pb-20">
+      {/* Content layer - hidden initially, appears when header moves to top */}
+      <div className={`relative z-10 mx-auto w-full max-w-7xl px-4 pb-12 text-center sm:px-6 sm:pb-20 transition-all duration-700 ${
+        showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}>
         <div className="relative">
           {textSlides.map((slide, index) => (
             <div

@@ -12,6 +12,7 @@ interface HeaderProps {
 export default function Header({ onDonateClick }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { user, userProfile, logout } = useAuth();
   const { getTotalItems } = useCart();
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -43,8 +44,27 @@ export default function Header({ onDonateClick }: HeaderProps) {
     };
   }, [userMenuOpen]);
 
+  // Handle scroll to switch header position from bottom to top
+  useEffect(() => {
+    const handleScroll = () => {
+      // Switch to top position after scrolling 100px
+      if (window.scrollY > 100) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-800 bg-black backdrop-blur-sm">
+    <header 
+      className={`fixed left-0 right-0 z-50 border-b border-slate-800 bg-black backdrop-blur-sm transition-all duration-500 ${
+        isScrolled ? 'top-0 bottom-auto animate-slide-down' : 'bottom-0 top-auto'
+      }`}
+    >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 sm:px-6">
         <Link href="/" className="flex items-center gap-1.5 sm:gap-2 hover:opacity-80 transition-opacity">
           <img 

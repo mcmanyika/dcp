@@ -78,7 +78,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-white pt-16">
+      <div className="min-h-screen bg-white">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
           <div className="mb-4">
             <Link
@@ -121,7 +121,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pt-16">
+    <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <div className="mb-4">
           <Link
