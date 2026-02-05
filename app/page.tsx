@@ -198,6 +198,7 @@ export default function Home() {
               {news.map((newsItem) => (
                 <UpdateCard
                   key={newsItem.id}
+                  id={newsItem.id}
                   title={newsItem.title}
                   description={newsItem.description}
                   date={
@@ -634,12 +635,15 @@ function FocusCard({ title, description }: { title: string; description: string 
   );
 }
 
-function UpdateCard({ title, description, date }: { title: string; description: string; date: string }) {
+function UpdateCard({ id, title, description, date }: { id: string; title: string; description: string; date: string }) {
   return (
-    <div className="group rounded-lg border border-slate-200 bg-white p-4 transition-all duration-300 hover:border-slate-900 hover:shadow-md sm:p-5">
+    <Link 
+      href={`/news/${id}`}
+      className="group block rounded-lg border border-slate-200 bg-white p-4 transition-all duration-300 hover:border-slate-900 hover:shadow-md sm:p-5"
+    >
       <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 transition-colors duration-300 group-hover:text-slate-600">{date}</p>
       <h3 className="mb-2 text-sm font-bold transition-colors duration-300 group-hover:text-slate-900 sm:text-base">{title}</h3>
       <p className="text-xs text-slate-600 transition-colors duration-300 group-hover:text-slate-700 line-clamp-3">{description}</p>
-    </div>
+    </Link>
   );
 }

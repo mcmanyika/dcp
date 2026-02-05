@@ -3,6 +3,7 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  deleteDoc,
   collection,
   query,
   where,
@@ -1006,9 +1007,8 @@ export async function updateNews(newsId: string, data: Partial<News>): Promise<v
 }
 
 export async function deleteNews(newsId: string): Promise<void> {
-  await updateDoc(doc(requireDb(), 'news', newsId), { isPublished: false })
-  // Or use deleteDoc if you want to permanently delete:
-  // await deleteDoc(doc(requireDb(), 'news', newsId))
+  const db = requireDb()
+  await deleteDoc(doc(db, 'news', newsId))
 }
 
 // Petition operations

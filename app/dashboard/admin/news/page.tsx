@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import ProtectedRoute from '@/app/components/ProtectedRoute'
 import AdminRoute from '@/app/components/AdminRoute'
 import DashboardNav from '@/app/components/DashboardNav'
+import RichTextEditor from '@/app/components/RichTextEditor'
 import Link from 'next/link'
 import {
   getNews,
@@ -62,6 +63,9 @@ function NewsManagement() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [newsToDelete, setNewsToDelete] = useState<News | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     loadNews()
@@ -187,15 +191,29 @@ function NewsManagement() {
     }
   }
 
-  const handleDelete = async (newsId: string) => {
-    if (!confirm('Are you sure you want to delete this news item?')) return
+  const openDeleteModal = (newsItem: News) => {
+    setNewsToDelete(newsItem)
+    setDeleteModalOpen(true)
+  }
+
+  const closeDeleteModal = () => {
+    setNewsToDelete(null)
+    setDeleteModalOpen(false)
+  }
+
+  const handleDelete = async () => {
+    if (!newsToDelete) return
 
     try {
-      await deleteNews(newsId)
+      setDeleting(true)
+      await deleteNews(newsToDelete.id)
       await loadNews()
+      closeDeleteModal()
     } catch (err: any) {
       setError(err.message || 'Failed to delete news')
       console.error('Error deleting news:', err)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -320,7 +338,7 @@ function NewsManagement() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(newsItem.id)}
+                        onClick={() => openDeleteModal(newsItem)}
                         className="text-red-600 hover:text-red-900 transition-colors"
                       >
                         Delete
@@ -334,10 +352,13 @@ function NewsManagement() {
         </table>
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Modal - Slide from right */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/50" onClick={handleCloseModal}>
+          <div 
+            className="bg-white shadow-xl w-full md:w-1/2 h-full overflow-y-auto animate-slide-in-right"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold">
@@ -384,11 +405,9 @@ function NewsManagement() {
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Full Content (Optional)
                   </label>
-                  <textarea
+                  <RichTextEditor
                     value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    rows={6}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-slate-900 focus:outline-none"
+                    onChange={(value) => setFormData({ ...formData, content: value })}
                     placeholder="Full article content..."
                   />
                 </div>
@@ -478,6 +497,50 @@ function NewsManagement() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && newsToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={closeDeleteModal}>
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 animate-fade-in-scale"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-red-100">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-center text-slate-900 mb-2">Delete Article</h3>
+              <p className="text-sm text-center text-slate-600 mb-2">
+                Are you sure you want to delete this article?
+              </p>
+              <p className="text-sm text-center font-semibold text-slate-900 mb-4">
+                "{newsToDelete.title}"
+              </p>
+              <p className="text-xs text-center text-red-600 mb-6">
+                This action cannot be undone. The article will be permanently removed.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={closeDeleteModal}
+                  disabled={deleting}
+                  className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
