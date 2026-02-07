@@ -7,6 +7,13 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
+          <Link href="/" className="inline-block mb-4">
+            <img 
+              src="/images/logo.png" 
+              alt="DCP Logo" 
+              className="mx-auto h-24 w-24 rounded-md object-contain"
+            />
+          </Link>
           <h1 className="mb-2 text-3xl font-bold">Welcome Back</h1>
           <p className="text-slate-600">Sign in to your account</p>
         </div>

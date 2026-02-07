@@ -68,7 +68,7 @@ export default function ResourcesPage() {
                 title="Video Library"
                 description="Educational videos and recorded sessions on constitutional governance"
                 icon="🎥"
-                href="#"
+                href="https://youtube.com/@defendtheconstitutionplatform"
               />
             </div>
 
@@ -115,9 +115,12 @@ function ResourceCard({
   icon: string
   href: string
 }) {
+  const isExternal = href.startsWith('http')
   return (
     <Link
       href={href}
+      target={isExternal ? '_blank' : undefined}
+      rel={isExternal ? 'noopener noreferrer' : undefined}
       className="group rounded-lg border border-slate-200 bg-white p-6 transition-all hover:border-slate-900 hover:shadow-lg"
     >
       <div className="mb-4 text-4xl">{icon}</div>
