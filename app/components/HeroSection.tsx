@@ -105,7 +105,7 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
     <section
       ref={heroRef}
       id="intro"
-      className="relative flex min-h-screen items-end justify-center pb-20"
+      className="relative hidden md:flex min-h-screen items-end justify-center pb-20"
     >
       {/* Background with parallax - smooth crossfade */}
       {backgroundImages.map((image, index) => (
