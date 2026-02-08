@@ -119,7 +119,8 @@ html {
 
 /* Safe area inset for mobile status bar (time, battery, notch, Dynamic Island) */
 .safe-top {
-  top: env(safe-area-inset-top, 0px);
+  top: 0;
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* Hide scrollbar but keep scroll functionality */
