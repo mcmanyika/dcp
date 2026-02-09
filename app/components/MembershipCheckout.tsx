@@ -7,48 +7,25 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { stripePromise } from '@/lib/stripe/config'
 import { createMembership } from '@/lib/firebase/firestore'
 
-const membershipTiers = [
-  {
-    id: 'basic',
-    name: 'Basic',
-    price: 10,
-    features: [
-      'Access to community forums',
-      'Monthly newsletter',
-      'Basic resources',
-    ],
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    price: 25,
-    features: [
-      'Everything in Basic',
-      'Exclusive webinars',
-      'Advanced resources',
-      'Priority support',
-    ],
-    popular: true,
-  },
-  {
-    id: 'champion',
-    name: 'Champion',
-    price: 50,
-    features: [
-      'Everything in Premium',
-      'VIP events access',
-      'Direct communication with leadership',
-      'Early access to campaigns',
-    ],
-  },
-]
+const MEMBERSHIP = {
+  id: 'member',
+  name: 'Member',
+  price: 25,
+  features: [
+    'Access to community forums',
+    'Monthly newsletter',
+    'Exclusive webinars',
+    'Advanced resources',
+    'Priority support',
+    'Early access to campaigns',
+  ],
+}
 
 interface MembershipCheckoutContentProps {
   onSuccess?: () => void
 }
 
 function MembershipCheckoutContent({ onSuccess }: MembershipCheckoutContentProps) {
-  const [selectedTier, setSelectedTier] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [clientSecret, setClientSecret] = useState('')
@@ -58,58 +35,48 @@ function MembershipCheckoutContent({ onSuccess }: MembershipCheckoutContentProps
   const elements = useElements()
 
   useEffect(() => {
-    // Create payment intent when tier is selected
-    if (selectedTier) {
-      const tier = membershipTiers.find((t) => t.id === selectedTier)
-      if (tier) {
-        const createPaymentIntent = async () => {
-          try {
-            setError('')
-            const response = await fetch('/api/stripe/create-payment-intent', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                amount: tier.price,
-                userId: user?.uid || null,
-                userEmail: user?.email || null,
-                userName: user?.displayName || null,
-                type: 'membership',
-                description: `${tier.name} Membership`,
-                tier: selectedTier,
-              }),
-            })
+    // Create payment intent on mount for the single membership
+    const createPaymentIntent = async () => {
+      try {
+        setError('')
+        const response = await fetch('/api/stripe/create-payment-intent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: MEMBERSHIP.price,
+            userId: user?.uid || null,
+            userEmail: user?.email || null,
+            userName: user?.displayName || null,
+            type: 'membership',
+            description: `${MEMBERSHIP.name} Membership`,
+            tier: MEMBERSHIP.id,
+          }),
+        })
 
-            const data = await response.json()
+        const data = await response.json()
 
-            if (!response.ok) {
-              throw new Error(data.error || 'Failed to create payment intent')
-            }
-
-            setClientSecret(data.clientSecret)
-          } catch (err: any) {
-            console.error('Error creating payment intent:', err)
-            setError(err.message || 'Failed to initialize payment')
-            setClientSecret('')
-          }
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to create payment intent')
         }
-        
-        createPaymentIntent()
+
+        setClientSecret(data.clientSecret)
+      } catch (err: any) {
+        console.error('Error creating payment intent:', err)
+        setError(err.message || 'Failed to initialize payment')
+        setClientSecret('')
       }
-    } else {
-      setClientSecret('')
     }
-  }, [selectedTier, user?.uid, user?.email, user?.displayName])
+
+    if (user) {
+      createPaymentIntent()
+    }
+  }, [user?.uid, user?.email, user?.displayName])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    
-    if (!selectedTier) {
-      setError('Please select a membership tier')
-      return
-    }
 
     if (!stripe || !elements || !clientSecret) {
       setError('Payment system not ready. Please try again.')
@@ -125,8 +92,6 @@ function MembershipCheckoutContent({ onSuccess }: MembershipCheckoutContentProps
     setLoading(true)
 
     try {
-      const tier = membershipTiers.find((t) => t.id === selectedTier)
-      
       // Confirm payment with auto-captured user info
       const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
         clientSecret,
@@ -150,7 +115,7 @@ function MembershipCheckoutContent({ onSuccess }: MembershipCheckoutContentProps
         try {
           const membership = {
             userId: user?.uid || '',
-            tier: selectedTier as any,
+            tier: MEMBERSHIP.id as any,
             stripePaymentIntentId: paymentIntent.id,
             status: 'succeeded' as const,
           }
@@ -164,13 +129,11 @@ function MembershipCheckoutContent({ onSuccess }: MembershipCheckoutContentProps
             userId: user?.uid,
             paymentIntentId: paymentIntent.id,
           })
-          // Show error to user but continue - webhook will handle it as backup
           alert('Payment succeeded, but there was an error saving the membership. It will be saved automatically via webhook.')
         }
 
         // Refresh user profile to update membership tier
         if (window.location.pathname.includes('/dashboard')) {
-          // Wait a moment for webhook to process, then refresh
           setTimeout(() => {
             window.location.reload()
           }, 1500)
@@ -195,59 +158,36 @@ function MembershipCheckoutContent({ onSuccess }: MembershipCheckoutContentProps
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {membershipTiers.map((tier) => (
-          <div
-            key={tier.id}
-            onClick={() => setSelectedTier(tier.id)}
-            className={`relative cursor-pointer rounded-xl border-2 p-6 transition-all ${
-              selectedTier === tier.id
-                ? 'border-slate-900 bg-slate-50'
-                : 'border-slate-200 hover:border-slate-400'
-            } ${tier.popular ? 'ring-2 ring-slate-900' : ''}`}
-          >
-            {tier.popular && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
-                Popular
-              </div>
-            )}
-            <div className="text-center">
-              <h3 className="mb-2 text-lg font-bold">{tier.name}</h3>
-              <div className="mb-4">
-                <span className="text-3xl font-bold">${tier.price}</span>
-              </div>
-              <ul className="mb-4 space-y-2 text-left text-sm text-slate-600">
-                {tier.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start">
-                    <svg
-                      className="mr-2 h-5 w-5 flex-shrink-0 text-green-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <div
-                className={`inline-block rounded-lg px-4 py-2 text-sm font-semibold ${
-                  selectedTier === tier.id
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-200 text-slate-900'
-                }`}
-              >
-                {selectedTier === tier.id ? 'Selected' : 'Select'}
-              </div>
+      <div className="mx-auto max-w-md">
+        <div className="rounded-xl border-2 border-slate-900 bg-slate-50 p-6">
+          <div className="text-center">
+            <h3 className="mb-1 text-lg font-bold">{MEMBERSHIP.name}</h3>
+            <div className="mb-4">
+              <span className="text-4xl font-bold">${MEMBERSHIP.price}</span>
+              <span className="text-sm text-slate-500 ml-1">/ one-time</span>
             </div>
+            <ul className="mb-4 space-y-2 text-left text-sm text-slate-600">
+              {MEMBERSHIP.features.map((feature, idx) => (
+                <li key={idx} className="flex items-start">
+                  <svg
+                    className="mr-2 h-5 w-5 flex-shrink-0 text-green-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  {feature}
+                </li>
+              ))}
+            </ul>
           </div>
-        ))}
+        </div>
       </div>
 
       {clientSecret && (
@@ -275,10 +215,10 @@ function MembershipCheckoutContent({ onSuccess }: MembershipCheckoutContentProps
 
       <button
         type="submit"
-        disabled={loading || !selectedTier || !clientSecret}
+        disabled={loading || !clientSecret}
         className="w-full rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed sm:text-base"
       >
-        {loading ? 'Processing...' : 'Purchase Membership'}
+        {loading ? 'Processing...' : 'Purchase Membership — $25'}
       </button>
     </form>
   )

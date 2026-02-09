@@ -93,7 +93,7 @@ export default function MembershipCard() {
         <div className="text-center flex-1 flex flex-col justify-center">
           <h3 className="mb-2 text-xl font-bold">No Active Membership</h3>
           <p className="mb-6 text-slate-600">
-            Upgrade to a membership tier to unlock exclusive benefits
+            Become a member to unlock exclusive benefits
           </p>
           <a
             href="/dashboard/membership"
