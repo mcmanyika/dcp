@@ -168,7 +168,7 @@ export default function NewsPage() {
                         <img
                           src={newsItem.image}
                           alt={newsItem.title}
-                          className="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          className="h-40 w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
                         />
                       </div>
                     )}

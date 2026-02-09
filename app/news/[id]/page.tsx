@@ -192,7 +192,7 @@ export default function NewsDetailPage() {
                   <img
                     src={news.image}
                     alt={news.title}
-                    className="w-full h-56 md:h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-56 md:h-64 object-cover object-top transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
               )}
