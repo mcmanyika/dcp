@@ -36,9 +36,8 @@ export default function SurveysPage() {
     const loadSurveys = async () => {
       try {
         setLoading(true)
-        const allSurveys = await getSurveys(false)
-        // Filter out drafts for public view
-        setSurveys(allSurveys.filter(s => s.status !== 'draft'))
+        const allSurveys = await getSurveys('published')
+        setSurveys(allSurveys)
       } catch (error) {
         console.error('Error loading surveys:', error)
       } finally {

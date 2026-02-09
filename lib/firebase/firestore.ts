@@ -1666,64 +1666,117 @@ export async function createSurvey(
   }
 }
 
-export async function getSurveys(activeOnly: boolean = false): Promise<Survey[]> {
+// filter: 'active' = only active, 'published' = active + closed (no drafts), 'all' = everything (admin only)
+export async function getSurveys(filter: boolean | 'active' | 'published' | 'all' = 'all'): Promise<Survey[]> {
   if (!db) {
     console.warn('Firestore not initialized')
     return []
   }
 
-  try {
-    let q
-    if (activeOnly) {
-      q = query(
+  // Support legacy boolean: true = 'active', false = 'all'
+  const mode = typeof filter === 'boolean' ? (filter ? 'active' : 'all') : filter
+
+  const mapDoc = (docSnap: any): Survey => {
+    const data = docSnap.data()
+    return {
+      ...data,
+      id: docSnap.id,
+      createdAt: toDate(data.createdAt),
+      updatedAt: toDate(data.updatedAt),
+      deadline: data.deadline ? toDate(data.deadline) : undefined,
+    } as Survey
+  }
+
+  const sortByDate = (surveys: Survey[]) =>
+    surveys.sort((a, b) => {
+      const aDate = a.createdAt instanceof Date ? a.createdAt.getTime() : 0
+      const bDate = b.createdAt instanceof Date ? b.createdAt.getTime() : 0
+      return bDate - aDate
+    })
+
+  // --- Mode: 'active' — only active surveys (works for unauthenticated users) ---
+  if (mode === 'active') {
+    // Strategy 1: Composite query (requires index)
+    try {
+      const q = query(
         collection(db, 'surveys'),
         where('status', '==', 'active'),
         orderBy('createdAt', 'desc')
       )
-    } else {
-      q = query(
+      const snapshot = await getDocs(q)
+      return snapshot.docs.map(mapDoc)
+    } catch (error: any) {
+      console.warn('Surveys active composite query failed, trying simple where:', error?.code || error?.message)
+    }
+    // Strategy 2: Simple where without orderBy
+    try {
+      const q = query(
         collection(db, 'surveys'),
+        where('status', '==', 'active')
+      )
+      const snapshot = await getDocs(q)
+      return sortByDate(snapshot.docs.map(mapDoc))
+    } catch (error: any) {
+      console.error('Surveys active query failed:', error?.code || error?.message)
+      return []
+    }
+  }
+
+  // --- Mode: 'published' — active + closed (works for unauthenticated users) ---
+  if (mode === 'published') {
+    // Strategy 1: Use Firestore 'in' query (active + closed)
+    try {
+      const q = query(
+        collection(db, 'surveys'),
+        where('status', 'in', ['active', 'closed']),
         orderBy('createdAt', 'desc')
       )
+      const snapshot = await getDocs(q)
+      return snapshot.docs.map(mapDoc)
+    } catch (error: any) {
+      console.warn('Surveys published composite query failed, trying simple where:', error?.code || error?.message)
     }
+    // Strategy 2: 'in' without orderBy
+    try {
+      const q = query(
+        collection(db, 'surveys'),
+        where('status', 'in', ['active', 'closed'])
+      )
+      const snapshot = await getDocs(q)
+      return sortByDate(snapshot.docs.map(mapDoc))
+    } catch (error: any) {
+      console.warn('Surveys published where-only query failed, trying per-status:', error?.code || error?.message)
+    }
+    // Strategy 3: Fetch active and closed separately, merge
+    try {
+      const [activeSnap, closedSnap] = await Promise.all([
+        getDocs(query(collection(db, 'surveys'), where('status', '==', 'active'))),
+        getDocs(query(collection(db, 'surveys'), where('status', '==', 'closed'))),
+      ])
+      const surveys = [...activeSnap.docs.map(mapDoc), ...closedSnap.docs.map(mapDoc)]
+      return sortByDate(surveys)
+    } catch (error: any) {
+      console.error('All surveys published query strategies failed:', error?.code || error?.message)
+      return []
+    }
+  }
+
+  // --- Mode: 'all' — everything including drafts (admin only) ---
+  try {
+    const q = query(
+      collection(db, 'surveys'),
+      orderBy('createdAt', 'desc')
+    )
     const snapshot = await getDocs(q)
-    return snapshot.docs.map((docSnap) => {
-      const data = docSnap.data()
-      return {
-        ...data,
-        id: docSnap.id,
-        createdAt: toDate(data.createdAt),
-        updatedAt: toDate(data.updatedAt),
-        deadline: data.deadline ? toDate(data.deadline) : undefined,
-      } as Survey
-    })
+    return snapshot.docs.map(mapDoc)
   } catch (error: any) {
-    if (error?.code === 'failed-precondition') {
-      console.warn('Composite index not ready for surveys, using fallback')
-      try {
-        const snapshot = await getDocs(collection(db, 'surveys'))
-        const surveys = snapshot.docs.map((docSnap) => {
-          const data = docSnap.data()
-          return {
-            ...data,
-            id: docSnap.id,
-            createdAt: toDate(data.createdAt),
-            updatedAt: toDate(data.updatedAt),
-            deadline: data.deadline ? toDate(data.deadline) : undefined,
-          } as Survey
-        })
-        const filtered = activeOnly ? surveys.filter(s => s.status === 'active') : surveys
-        return filtered.sort((a, b) => {
-          const aDate = a.createdAt instanceof Date ? a.createdAt.getTime() : 0
-          const bDate = b.createdAt instanceof Date ? b.createdAt.getTime() : 0
-          return bDate - aDate
-        })
-      } catch (fallbackError: any) {
-        console.error('Error in fallback surveys query:', fallbackError)
-        return []
-      }
-    }
-    console.error('Error fetching surveys:', error)
+    console.warn('Surveys all query failed, trying unordered:', error?.code || error?.message)
+  }
+  try {
+    const snapshot = await getDocs(collection(db, 'surveys'))
+    return sortByDate(snapshot.docs.map(mapDoc))
+  } catch (fallbackError: any) {
+    console.error('All survey query strategies failed:', fallbackError?.code || fallbackError?.message)
     return []
   }
 }
@@ -1788,15 +1841,19 @@ export async function submitSurveyResponse(
 
     await setDoc(responseRef, responseData)
 
-    // Increment responseCount on the survey
-    const surveyRef = doc(db, 'surveys', response.surveyId)
-    const surveyDoc = await getDoc(surveyRef)
-    if (surveyDoc.exists()) {
-      const currentCount = surveyDoc.data().responseCount || 0
-      await updateDoc(surveyRef, {
-        responseCount: currentCount + 1,
-        updatedAt: Timestamp.now(),
-      })
+    // Increment responseCount on the survey (non-blocking — don't fail submission if this errors)
+    try {
+      const surveyRef = doc(db, 'surveys', response.surveyId)
+      const surveyDoc = await getDoc(surveyRef)
+      if (surveyDoc.exists()) {
+        const currentCount = surveyDoc.data().responseCount || 0
+        await updateDoc(surveyRef, {
+          responseCount: currentCount + 1,
+          updatedAt: Timestamp.now(),
+        })
+      }
+    } catch (countError: any) {
+      console.warn('Could not increment survey responseCount:', countError?.code || countError?.message)
     }
 
     console.log('Survey response submitted successfully:', responseRef.id)

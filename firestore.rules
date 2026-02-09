@@ -256,17 +256,17 @@ service cloud.firestore {
 
     // Surveys collection
     match /surveys/{surveyId} {
-      // Everyone can read active surveys
-      allow read: if resource.data.status == 'active';
-      // Admins can read all surveys (any status)
+      // Everyone can read active and closed surveys (not drafts)
+      allow read: if resource.data.status in ['active', 'closed'];
+      // Admins can read all surveys (any status including drafts)
       allow read: if isAdmin();
       // Only admins can create, update, or delete surveys
       allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
-      // Allow authenticated users to update responseCount only
-      allow update: if isAuthenticated() &&
-                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['responseCount', 'updatedAt']);
+      // Allow anyone to increment responseCount (for survey submissions)
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['responseCount', 'updatedAt']) &&
+                     request.resource.data.responseCount == resource.data.responseCount + 1;
     }
 
     // Survey Responses collection
