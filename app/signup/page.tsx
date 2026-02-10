@@ -1,7 +1,15 @@
+'use client'
+
+import { Suspense } from 'react'
 import SignupForm from '@/app/components/SignupForm'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
-export default function SignupPage() {
+function SignupContent() {
+  const searchParams = useSearchParams()
+  const returnUrl = searchParams.get('returnUrl')
+  const loginHref = returnUrl ? `/login?returnUrl=${encodeURIComponent(returnUrl)}` : '/login'
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
       <div className="w-full max-w-md">
@@ -17,7 +25,7 @@ export default function SignupPage() {
 
         <p className="mt-6 text-center text-sm text-slate-600">
           Already have an account?{' '}
-          <Link href="/login" className="font-semibold text-slate-900 hover:underline">
+          <Link href={loginHref} className="font-semibold text-slate-900 hover:underline">
             Sign in
           </Link>
         </p>
@@ -26,3 +34,17 @@ export default function SignupPage() {
   )
 }
 
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-slate-900 border-r-transparent"></div>
+          <p className="text-slate-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <SignupContent />
+    </Suspense>
+  )
+}

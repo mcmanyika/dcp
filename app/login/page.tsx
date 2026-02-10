@@ -1,8 +1,15 @@
+'use client'
+
 import { Suspense } from 'react'
 import LoginForm from '@/app/components/LoginForm'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
-export default function LoginPage() {
+function LoginContent() {
+  const searchParams = useSearchParams()
+  const returnUrl = searchParams.get('returnUrl')
+  const signupHref = returnUrl ? `/signup?returnUrl=${encodeURIComponent(returnUrl)}` : '/signup'
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
       <div className="w-full max-w-md">
@@ -19,19 +26,12 @@ export default function LoginPage() {
         </div>
 
         <div className="rounded-2xl border bg-white p-8 shadow-sm">
-          <Suspense fallback={
-            <div className="text-center py-8">
-              <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-slate-900 border-r-transparent"></div>
-              <p className="text-slate-600">Loading...</p>
-            </div>
-          }>
-            <LoginForm />
-          </Suspense>
+          <LoginForm />
         </div>
 
         <p className="mt-6 text-center text-sm text-slate-600">
-          Don't have an account?{' '}
-          <Link href="/signup" className="font-semibold text-slate-900 hover:underline">
+          Don&apos;t have an account?{' '}
+          <Link href={signupHref} className="font-semibold text-slate-900 hover:underline">
             Sign up
           </Link>
         </p>
@@ -40,3 +40,17 @@ export default function LoginPage() {
   )
 }
 
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-slate-900 border-r-transparent"></div>
+          <p className="text-slate-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
+  )
+}

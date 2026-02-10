@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function SignupForm() {
   const [formData, setFormData] = useState({
@@ -15,6 +15,8 @@ export default function SignupForm() {
   const [loading, setLoading] = useState(false)
   const { signUp, signInWithGoogle } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnUrl = searchParams.get('returnUrl') || '/dashboard'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,7 +37,7 @@ export default function SignupForm() {
 
     try {
       await signUp(formData.email, formData.password, formData.name)
-      router.push('/dashboard')
+      router.push(returnUrl)
     } catch (err: any) {
       let errorMessage = err.message || 'Failed to create account'
       
@@ -63,7 +65,7 @@ export default function SignupForm() {
     setLoading(true)
     try {
       await signInWithGoogle()
-      router.push('/dashboard')
+      router.push(returnUrl)
     } catch (err: any) {
       setError(err.message || 'Failed to sign in with Google')
     } finally {

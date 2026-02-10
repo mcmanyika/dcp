@@ -1,9 +1,46 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
+import { getMembershipApplicationByUser } from '@/lib/firebase/firestore'
 import MembershipApplicationForm from '@/app/components/MembershipApplicationForm'
+import ProtectedRoute from '@/app/components/ProtectedRoute'
 import Link from 'next/link'
 
-export default function MembershipApplicationPage() {
+function MembershipApplicationContent() {
+  const { user } = useAuth()
+  const router = useRouter()
+  const [checking, setChecking] = useState(true)
+
+  useEffect(() => {
+    async function checkExistingApplication() {
+      if (!user) return
+      try {
+        const existing = await getMembershipApplicationByUser(user.uid)
+        if (existing) {
+          router.replace('/dashboard')
+          return
+        }
+      } catch (err) {
+        console.error('Error checking existing application:', err)
+      }
+      setChecking(false)
+    }
+    checkExistingApplication()
+  }, [user, router])
+
+  if (checking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-slate-900 border-r-transparent"></div>
+          <p className="text-slate-600">Checking application status...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -48,5 +85,13 @@ export default function MembershipApplicationPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function MembershipApplicationPage() {
+  return (
+    <ProtectedRoute>
+      <MembershipApplicationContent />
+    </ProtectedRoute>
   )
 }

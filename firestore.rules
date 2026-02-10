@@ -286,13 +286,8 @@ service cloud.firestore {
 
     // Membership Applications collection
     match /membershipApplications/{appId} {
-      // Authenticated users can submit a membership application
+      // Only authenticated users can submit a membership application
       allow create: if isAuthenticated();
-      // Unauthenticated users can also submit with valid data
-      allow create: if request.resource.data.keys().hasAll(['type', 'declarationAccepted', 'status']) &&
-                     request.resource.data.type in ['individual', 'institutional'] &&
-                     request.resource.data.declarationAccepted == true &&
-                     request.resource.data.status == 'pending';
       // Users can read their own applications
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
       // Admins can read all applications
