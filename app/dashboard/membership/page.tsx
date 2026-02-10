@@ -74,7 +74,7 @@ export default function MembershipPage() {
 
           <div className="rounded-lg border border-slate-200 bg-white p-8">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold">Become a Member</h2>
+              <h2 className="text-2xl font-bold">Make Membership Payment</h2>
               <p className="mt-1 text-slate-600">
                 Support our mission and unlock exclusive benefits
               </p>
