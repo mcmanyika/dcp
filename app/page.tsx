@@ -375,7 +375,7 @@ export default function Home() {
       </section>
 
         {/* Shop Products Section */}
-        <section className="bg-slate-50 py-8 sm:py-12">
+        <section id="shop-section" className="bg-slate-50 py-8 sm:py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
             {productsLoading ? (
               <div className="flex items-center justify-center py-8">

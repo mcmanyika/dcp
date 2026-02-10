@@ -14,6 +14,7 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentBgImage, setCurrentBgImage] = useState(0);
   const [showContent, setShowContent] = useState(false);
+  const [heroInView, setHeroInView] = useState(true);
   const [backgroundImages, setBackgroundImages] = useState<string[]>(FALLBACK_IMAGES);
   const heroRef = useRef<HTMLElement>(null);
 
@@ -66,6 +67,14 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
         }
         // Show content when header moves to top (after scrolling 100px)
         setShowContent(scrolled > 100);
+        // Hide socials when shop section is reached
+        const shopSection = document.getElementById('shop-section');
+        if (shopSection) {
+          const shopRect = shopSection.getBoundingClientRect();
+          setHeroInView(shopRect.top > window.innerHeight);
+        } else {
+          setHeroInView(rect.bottom > 100);
+        }
       }
     };
 
@@ -99,7 +108,7 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
     <section
       ref={heroRef}
       id="intro"
-      className="relative hidden md:flex min-h-screen items-end justify-center pb-20"
+      className="relative flex min-h-screen items-end justify-center pb-20"
     >
       {/* Background with parallax - smooth crossfade */}
       {backgroundImages.map((image, index) => (
@@ -117,8 +126,8 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
         />
       ))}
       
-      {/* Social Media Icons - Left Side */}
-      <div className="absolute left-2 sm:left-4 top-1/2 z-20 -translate-y-1/2 flex flex-col gap-3 sm:gap-4 bg-black/30 backdrop-blur-sm rounded-full py-3 sm:py-4 px-1.5 sm:px-2">
+      {/* Social Media Icons - Left Side (Fixed, hides when scrolled past hero) */}
+      <div className={`fixed left-2 sm:left-4 top-1/2 z-30 -translate-y-1/2 flex flex-col gap-3 sm:gap-4 bg-black/30 backdrop-blur-sm rounded-full py-3 sm:py-4 px-1.5 sm:px-2 transition-opacity duration-300 ${heroInView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <a href="https://x.com/DCPlatform25" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white transition-colors" aria-label="X (Twitter)">
           <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
