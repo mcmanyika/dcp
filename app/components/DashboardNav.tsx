@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import NotificationBell from '@/app/components/NotificationBell'
 
 // SVG Icon Components (Heroicons outline style)
 function IconChart({ className = 'h-5 w-5' }: { className?: string }) {
@@ -229,7 +230,9 @@ export default function DashboardNav() {
               <span className="font-medium text-slate-900">{activeLabel}</span>
             </div>
 
-            {/* Right: Menu trigger */}
+            {/* Right: Notification bell + Menu trigger */}
+            <div className="flex items-center gap-2">
+              <NotificationBell />
             <button
               onClick={() => setMegaOpen(!megaOpen)}
               className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -252,6 +255,7 @@ export default function DashboardNav() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
               </svg>
             </button>
+            </div>
           </div>
         </div>
       </nav>

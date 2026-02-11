@@ -12,6 +12,7 @@ import {
   createNews,
   updateNews,
   deleteNews,
+  createNotification,
 } from '@/lib/firebase/firestore'
 import { uploadFile } from '@/lib/firebase/storage'
 import type { News, NewsCategory } from '@/types'
@@ -177,8 +178,28 @@ function NewsManagement() {
 
       if (editingNews) {
         await updateNews(editingNews.id, newsData)
+        // Notify users if article was just published (was unpublished before, now published)
+        if (!editingNews.isPublished && newsData.isPublished) {
+          await createNotification({
+            type: 'new_article',
+            title: 'New Article Published',
+            message: newsData.title,
+            link: '/news',
+            audience: 'all',
+          })
+        }
       } else {
         await createNews(newsData)
+        // Notify users if new article is published immediately
+        if (newsData.isPublished) {
+          await createNotification({
+            type: 'new_article',
+            title: 'New Article Published',
+            message: newsData.title,
+            link: '/news',
+            audience: 'all',
+          })
+        }
       }
 
       handleCloseModal()
@@ -219,7 +240,18 @@ function NewsManagement() {
 
   const handleTogglePublish = async (newsItem: News) => {
     try {
-      await updateNews(newsItem.id, { isPublished: !newsItem.isPublished })
+      const newPublished = !newsItem.isPublished
+      await updateNews(newsItem.id, { isPublished: newPublished })
+      // Notify users when article is published
+      if (newPublished) {
+        await createNotification({
+          type: 'new_article',
+          title: 'New Article Published',
+          message: newsItem.title,
+          link: '/news',
+          audience: 'all',
+        })
+      }
       await loadNews()
     } catch (err: any) {
       setError(err.message || 'Failed to update news status')

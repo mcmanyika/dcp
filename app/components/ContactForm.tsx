@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { createContactSubmission } from '@/lib/firebase/firestore'
+import { createContactSubmission, createNotification } from '@/lib/firebase/firestore'
 
 export default function ContactForm() {
   const { user } = useAuth()
@@ -62,6 +62,16 @@ export default function ContactForm() {
         message: formData.message.trim(),
         userId: user?.uid,
       })
+
+      // Create admin notification for new contact message
+      try {
+        await createNotification({
+          type: 'new_contact',
+          title: 'New Contact Message',
+          message: `${formData.name.trim()} (${formData.email.trim()}) sent a message.`,
+          link: '/dashboard/admin/contacts',
+        })
+      } catch (e) { /* non-critical */ }
 
       setSuccess(true)
       setFormData({

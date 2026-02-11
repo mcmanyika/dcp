@@ -297,6 +297,30 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Notifications collection
+    match /notifications/{notifId} {
+      // Any authenticated user can create notifications (triggered from client-side forms)
+      allow create: if isAuthenticated() ||
+                     (request.resource.data.keys().hasAll(['type', 'title', 'message', 'link', 'read']) &&
+                      request.resource.data.type is string &&
+                      request.resource.data.title is string &&
+                      request.resource.data.message is string &&
+                      request.resource.data.link is string &&
+                      request.resource.data.read is bool);
+      // Admins can read all notifications
+      allow read: if isAdmin();
+      // Authenticated users can read broadcast notifications (audience == 'all')
+      allow read: if isAuthenticated() && resource.data.audience == 'all';
+      // Authenticated users can read notifications targeted to them
+      allow read: if isAuthenticated() && resource.data.audience == 'user' && resource.data.userId == request.auth.uid;
+      // Admins can update any notification (mark as read, etc.)
+      allow update: if isAdmin();
+      // Authenticated users can update readBy on their own notifications or broadcast ones
+      allow update: if isAuthenticated() &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy']) &&
+                     (resource.data.audience == 'all' || (resource.data.audience == 'user' && resource.data.userId == request.auth.uid));
+    }
+
     // Newsletter subscriptions collection
     match /newsletterSubscriptions/{subscriptionId} {
       // Anyone can create newsletter subscriptions (authenticated or not)

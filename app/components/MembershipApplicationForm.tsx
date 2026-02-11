@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { createMembershipApplication } from '@/lib/firebase/firestore'
+import { createMembershipApplication, createNotification } from '@/lib/firebase/firestore'
 import type { MembershipApplicationType, ParticipationArea, OrganisationType } from '@/types'
 
 const provinces = [
@@ -234,6 +234,20 @@ export default function MembershipApplicationForm() {
       }
 
       await createMembershipApplication(applicationData)
+
+      // Create admin notification for new membership application
+      try {
+        const applicantName = membershipType === 'individual'
+          ? individual.fullName.trim()
+          : institutional.organisationName.trim()
+        await createNotification({
+          type: 'new_membership_application',
+          title: 'New Membership Application',
+          message: `${applicantName} submitted a ${membershipType} membership application.`,
+          link: '/dashboard/admin/membership-applications',
+        })
+      } catch (e) { /* non-critical */ }
+
       setSuccess(true)
       window.scrollTo(0, 0)
     } catch (err: any) {

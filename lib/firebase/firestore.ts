@@ -11,9 +11,12 @@ import {
   orderBy,
   limit,
   Timestamp,
+  writeBatch,
+  onSnapshot,
+  arrayUnion,
 } from 'firebase/firestore'
 import { db } from './config'
-import type { UserProfile, Donation, Membership, ContactSubmission, Purchase, Product, UserRole, News, CartItem, VolunteerApplication, VolunteerApplicationStatus, Petition, PetitionSignature, ShipmentStatus, NewsletterSubscription, Banner, GalleryCategory, GalleryImage, Survey, SurveyResponse, MembershipApplication, MembershipApplicationStatus } from '@/types'
+import type { UserProfile, Donation, Membership, ContactSubmission, Purchase, Product, UserRole, News, CartItem, VolunteerApplication, VolunteerApplicationStatus, Petition, PetitionSignature, ShipmentStatus, NewsletterSubscription, Banner, GalleryCategory, GalleryImage, Survey, SurveyResponse, MembershipApplication, MembershipApplicationStatus, AdminNotification, NotificationType, NotificationAudience } from '@/types'
 
 // Helper functions
 function requireDb() {
@@ -2143,4 +2146,213 @@ export async function updateMembershipApplication(
 
 export async function deleteMembershipApplication(applicationId: string): Promise<void> {
   await deleteDoc(doc(requireDb(), 'membershipApplications', applicationId))
+}
+
+// ====================== Notification Operations ======================
+
+export async function createNotification(
+  notification: Omit<AdminNotification, 'id' | 'createdAt' | 'read' | 'readBy' | 'audience' | 'userId'> & { audience?: NotificationAudience; userId?: string }
+): Promise<string> {
+  const db = requireDb()
+  const notifRef = doc(collection(db, 'notifications'))
+
+  try {
+    const notifData = {
+      ...notification,
+      id: notifRef.id,
+      read: false,
+      readBy: [],
+      audience: notification.audience || 'admin',
+      createdAt: Timestamp.now(),
+    }
+    await setDoc(notifRef, notifData)
+    return notifRef.id
+  } catch (error: any) {
+    console.error('Error creating notification:', error)
+    return ''
+  }
+}
+
+export async function getNotifications(limitCount: number = 20): Promise<AdminNotification[]> {
+  if (!db) return []
+
+  try {
+    const q = query(
+      collection(db, 'notifications'),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map((docSnap) => {
+      const data = docSnap.data()
+      return {
+        ...data,
+        id: docSnap.id,
+        readBy: data.readBy || [],
+        audience: data.audience || 'admin',
+        createdAt: toDate(data.createdAt),
+      } as AdminNotification
+    })
+  } catch (error: any) {
+    console.error('Error fetching notifications:', error)
+    return []
+  }
+}
+
+// Subscribe to admin notifications (all notifications)
+export function subscribeToNotifications(
+  limitCount: number = 20,
+  callback: (notifications: AdminNotification[]) => void
+): () => void {
+  if (!db) return () => {}
+
+  const q = query(
+    collection(db, 'notifications'),
+    orderBy('createdAt', 'desc'),
+    limit(limitCount)
+  )
+
+  return onSnapshot(q, (snapshot) => {
+    const notifications = snapshot.docs.map((docSnap) => {
+      const data = docSnap.data()
+      return {
+        ...data,
+        id: docSnap.id,
+        readBy: data.readBy || [],
+        audience: data.audience || 'admin',
+        createdAt: toDate(data.createdAt),
+      } as AdminNotification
+    })
+    callback(notifications)
+  }, (error) => {
+    console.error('Error in notifications listener:', error)
+  })
+}
+
+// Subscribe to user-facing notifications (broadcast + user-specific)
+export function subscribeToUserNotifications(
+  userId: string,
+  limitCount: number = 20,
+  callback: (notifications: AdminNotification[]) => void
+): () => void {
+  if (!db || !userId) return () => {}
+
+  let broadcastNotifs: AdminNotification[] = []
+  let userNotifs: AdminNotification[] = []
+
+  function mergeAndCallback() {
+    const merged = [...broadcastNotifs, ...userNotifs]
+      .sort((a, b) => {
+        const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0
+        const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0
+        return bTime - aTime
+      })
+      .slice(0, limitCount)
+    callback(merged)
+  }
+
+  // Listener 1: Broadcast notifications (audience == 'all')
+  const q1 = query(
+    collection(db, 'notifications'),
+    where('audience', '==', 'all'),
+    orderBy('createdAt', 'desc'),
+    limit(limitCount)
+  )
+
+  const unsub1 = onSnapshot(q1, (snapshot) => {
+    broadcastNotifs = snapshot.docs.map((docSnap) => {
+      const data = docSnap.data()
+      return {
+        ...data,
+        id: docSnap.id,
+        readBy: data.readBy || [],
+        audience: data.audience || 'all',
+        createdAt: toDate(data.createdAt),
+      } as AdminNotification
+    })
+    mergeAndCallback()
+  }, (error) => {
+    console.error('Error in broadcast notifications listener:', error)
+  })
+
+  // Listener 2: User-specific notifications (audience == 'user' && userId matches)
+  const q2 = query(
+    collection(db, 'notifications'),
+    where('audience', '==', 'user'),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc'),
+    limit(limitCount)
+  )
+
+  const unsub2 = onSnapshot(q2, (snapshot) => {
+    userNotifs = snapshot.docs.map((docSnap) => {
+      const data = docSnap.data()
+      return {
+        ...data,
+        id: docSnap.id,
+        readBy: data.readBy || [],
+        audience: data.audience || 'user',
+        createdAt: toDate(data.createdAt),
+      } as AdminNotification
+    })
+    mergeAndCallback()
+  }, (error) => {
+    console.error('Error in user notifications listener:', error)
+  })
+
+  return () => {
+    unsub1()
+    unsub2()
+  }
+}
+
+export async function markNotificationRead(notificationId: string, userId?: string): Promise<void> {
+  const db = requireDb()
+  const updateData: Record<string, any> = { read: true }
+  if (userId) {
+    updateData.readBy = arrayUnion(userId)
+  }
+  await updateDoc(doc(db, 'notifications', notificationId), updateData)
+}
+
+export async function markAllNotificationsRead(userId?: string): Promise<void> {
+  const db = requireDb()
+
+  try {
+    const q = query(
+      collection(db, 'notifications'),
+      where('read', '==', false)
+    )
+    const snapshot = await getDocs(q)
+
+    if (snapshot.empty) return
+
+    const batch = writeBatch(db)
+    snapshot.docs.forEach((docSnap) => {
+      const updateData: Record<string, any> = { read: true }
+      if (userId) {
+        updateData.readBy = arrayUnion(userId)
+      }
+      batch.update(docSnap.ref, updateData)
+    })
+    await batch.commit()
+  } catch (error: any) {
+    console.error('Error marking all notifications as read:', error)
+  }
+}
+
+export async function markUserNotificationsRead(userId: string, notificationIds: string[]): Promise<void> {
+  const db = requireDb()
+
+  try {
+    const batch = writeBatch(db)
+    for (const id of notificationIds) {
+      batch.update(doc(db, 'notifications', id), {
+        readBy: arrayUnion(userId),
+      })
+    }
+    await batch.commit()
+  } catch (error: any) {
+    console.error('Error marking user notifications as read:', error)
+  }
 }

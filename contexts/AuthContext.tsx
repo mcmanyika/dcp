@@ -14,6 +14,7 @@ import {
 } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase/config'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { createNotification } from '@/lib/firebase/firestore'
 import type { UserProfile } from '@/types'
 
 interface AuthContextType {
@@ -131,6 +132,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       createdAt: new Date(),
     })
     setUserProfile(userProfile)
+
+    // Create admin notification for new user signup
+    try {
+      await createNotification({
+        type: 'new_user',
+        title: 'New User Registration',
+        message: `${name} (${email}) just signed up.`,
+        link: '/dashboard/admin/users',
+      })
+    } catch (e) { /* non-critical */ }
   }
 
   const signIn = async (email: string, password: string) => {
@@ -166,6 +177,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ...userProfile,
         createdAt: new Date(),
       })
+
+      // Create admin notification for new Google user signup
+      try {
+        await createNotification({
+          type: 'new_user',
+          title: 'New User Registration',
+          message: `${user.displayName || user.email} signed up via Google.`,
+          link: '/dashboard/admin/users',
+        })
+      } catch (e) { /* non-critical */ }
     }
   }
 

@@ -6,7 +6,7 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { stripePromise } from '@/lib/stripe/config'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCart } from '@/contexts/CartContext'
-import { getProductById, createPurchase, decrementProductStock } from '@/lib/firebase/firestore'
+import { getProductById, createPurchase, decrementProductStock, createNotification } from '@/lib/firebase/firestore'
 import type { Product } from '@/types'
 import Link from 'next/link'
 
@@ -168,6 +168,18 @@ function PaymentContent() {
               console.error(`Error decrementing stock for product ${product.id}:`, stockError)
             }
           }
+          // Create admin notification for new purchase
+          try {
+            const itemsSummary = cartItems.length > 0
+              ? cartItems.map(i => `${i.productName} x${i.quantity}`).join(', ')
+              : product?.name || 'Unknown product'
+            await createNotification({
+              type: 'new_purchase',
+              title: 'New Purchase',
+              message: `${user?.displayName || user?.email || 'A customer'} purchased: ${itemsSummary}`,
+              link: '/dashboard/admin/orders',
+            })
+          } catch (e) { /* non-critical */ }
         } catch (purchaseError: any) {
           console.error('Error creating purchase record:', purchaseError)
           console.error('Error details:', {

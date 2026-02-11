@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { stripePromise } from '@/lib/stripe/config'
-import { createDonation, createStripeCustomerId } from '@/lib/firebase/firestore'
+import { createDonation, createStripeCustomerId, createNotification } from '@/lib/firebase/firestore'
 
 interface DonationFormContentProps {
   onSuccess?: () => void
@@ -129,6 +129,16 @@ function DonationFormContent({ onSuccess }: DonationFormContentProps) {
           }
           const donationId = await createDonation(donation)
           console.log('Donation record created in Firestore:', donationId)
+
+          // Create admin notification for new donation
+          try {
+            await createNotification({
+              type: 'new_donation',
+              title: 'New Donation',
+              message: `${user?.displayName || user?.email || 'Someone'} donated $${parseFloat(donationAmount).toFixed(2)}.`,
+              link: '/dashboard/admin/users',
+            })
+          } catch (e) { /* non-critical */ }
         } catch (donationError: any) {
           console.error('Error creating donation record:', donationError)
           console.error('Error details:', {

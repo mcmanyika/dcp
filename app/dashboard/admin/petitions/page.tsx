@@ -11,6 +11,7 @@ import {
   createPetition,
   updatePetition,
   deletePetition,
+  createNotification,
 } from '@/lib/firebase/firestore'
 import { uploadFile } from '@/lib/firebase/storage'
 import { useAuth } from '@/contexts/AuthContext'
@@ -181,8 +182,28 @@ function PetitionManagement() {
 
       if (editingPetition) {
         await updatePetition(editingPetition.id, petitionData)
+        // Notify users if petition was just published
+        if (!editingPetition.isPublished && petitionData.isPublished) {
+          await createNotification({
+            type: 'new_petition',
+            title: 'New Petition Published',
+            message: petitionData.title,
+            link: '/petitions',
+            audience: 'all',
+          })
+        }
       } else {
         await createPetition(petitionData)
+        // Notify users if new petition is published immediately
+        if (petitionData.isPublished) {
+          await createNotification({
+            type: 'new_petition',
+            title: 'New Petition Published',
+            message: petitionData.title,
+            link: '/petitions',
+            audience: 'all',
+          })
+        }
       }
 
       handleCloseModal()
@@ -211,7 +232,18 @@ function PetitionManagement() {
 
   const handleTogglePublish = async (petition: Petition) => {
     try {
-      await updatePetition(petition.id, { isPublished: !petition.isPublished })
+      const newPublished = !petition.isPublished
+      await updatePetition(petition.id, { isPublished: newPublished })
+      // Notify users when petition is published
+      if (newPublished) {
+        await createNotification({
+          type: 'new_petition',
+          title: 'New Petition Published',
+          message: petition.title,
+          link: '/petitions',
+          audience: 'all',
+        })
+      }
       await loadPetitions()
     } catch (err: any) {
       setError(err.message || 'Failed to update petition status')

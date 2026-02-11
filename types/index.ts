@@ -298,6 +298,33 @@ export interface MembershipApplication {
   updatedAt: Timestamp | Date
 }
 
+// Admin Notification types
+export type NotificationType =
+  | 'new_user'
+  | 'new_purchase'
+  | 'new_donation'
+  | 'new_membership_application'
+  | 'new_contact'
+  | 'new_volunteer'
+  | 'new_article'
+  | 'new_petition'
+  | 'purchase_status_update'
+
+export type NotificationAudience = 'admin' | 'all' | 'user'
+
+export interface AdminNotification {
+  id: string
+  type: NotificationType
+  title: string
+  message: string
+  link: string
+  read: boolean               // legacy admin-only flag
+  readBy: string[]             // per-user read tracking (userIds)
+  audience: NotificationAudience  // who can see this notification
+  userId?: string              // target user (when audience === 'user')
+  createdAt: Timestamp | Date
+}
+
 // Ensure this file is treated as a module
 export { }
 

@@ -5,7 +5,7 @@ import ProtectedRoute from '@/app/components/ProtectedRoute'
 import AdminRoute from '@/app/components/AdminRoute'
 import DashboardNav from '@/app/components/DashboardNav'
 import Link from 'next/link'
-import { getAllPurchases, updatePurchase, getProductById } from '@/lib/firebase/firestore'
+import { getAllPurchases, updatePurchase, getProductById, createNotification } from '@/lib/firebase/firestore'
 import type { Purchase, PaymentStatus, ShipmentStatus } from '@/types'
 
 function toDate(date: Date | any): Date | null {
@@ -122,11 +122,34 @@ function OrdersManagement() {
 
     setUpdating(true)
     try {
+      const oldShipmentStatus = selectedOrder.shipmentStatus || 'pending'
+      const newShipmentStatus = formData.shipmentStatus
+
       await updatePurchase(selectedOrder.id, {
         status: formData.status,
-        shipmentStatus: formData.shipmentStatus,
+        shipmentStatus: newShipmentStatus,
         trackingNumber: formData.trackingNumber.trim() || undefined,
       })
+
+      // Notify the buyer if shipment status changed
+      if (oldShipmentStatus !== newShipmentStatus && selectedOrder.userId) {
+        const statusLabels: Record<string, string> = {
+          pending: 'Pending',
+          processing: 'Processing',
+          shipped: 'Shipped',
+          delivered: 'Delivered',
+          cancelled: 'Cancelled',
+        }
+        await createNotification({
+          type: 'purchase_status_update',
+          title: `Order Update: ${statusLabels[newShipmentStatus] || newShipmentStatus}`,
+          message: `Your order for "${selectedOrder.productName}" is now ${statusLabels[newShipmentStatus] || newShipmentStatus}.${newShipmentStatus === 'shipped' && formData.trackingNumber.trim() ? ` Tracking: ${formData.trackingNumber.trim()}` : ''}`,
+          link: '/dashboard/donations',
+          audience: 'user',
+          userId: selectedOrder.userId,
+        })
+      }
+
       await loadOrders()
       setShowModal(false)
       setSelectedOrder(null)

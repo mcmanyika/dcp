@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { createVolunteerApplication } from '@/lib/firebase/firestore'
+import { createVolunteerApplication, createNotification } from '@/lib/firebase/firestore'
 
 const commonSkills = [
   'Event Planning',
@@ -138,6 +138,16 @@ export default function VolunteerApplicationForm() {
       if (formData.references.trim()) applicationData.references = formData.references.trim()
 
       await createVolunteerApplication(applicationData)
+
+      // Create admin notification for new volunteer application
+      try {
+        await createNotification({
+          type: 'new_volunteer',
+          title: 'New Volunteer Application',
+          message: `${formData.name.trim()} applied to volunteer.`,
+          link: '/dashboard/admin/volunteers',
+        })
+      } catch (e) { /* non-critical */ }
 
       setSuccess(true)
       setTimeout(() => {

@@ -131,7 +131,7 @@ export default function HeroSection({ onSupportClick }: HeroSectionProps) {
     <section
       ref={heroRef}
       id="intro"
-      className={`relative flex min-h-screen items-end justify-center pb-20 transition-opacity duration-700 ${imagesReady ? 'opacity-100' : 'opacity-0'}`}
+      className={`relative flex h-[100svh] items-end justify-center pb-20 overflow-hidden transition-opacity duration-700 ${imagesReady ? 'opacity-100' : 'opacity-0'}`}
     >
       {/* Background with parallax - smooth crossfade */}
       {backgroundImages.map((image, index) => (
