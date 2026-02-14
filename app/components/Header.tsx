@@ -185,12 +185,6 @@ export default function Header({ onDonateClick, onContactClick, startAtBottom = 
           ) : (
             <>
               <Link
-                href="/signup"
-                className="hidden rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800 transition-colors sm:px-4 sm:py-2 sm:text-sm md:inline-flex"
-              >
-                Join
-              </Link>
-              <Link
                 href="/login"
                 className="hidden rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800 transition-colors sm:px-4 sm:py-2 sm:text-sm md:inline-flex"
               >
@@ -297,13 +291,6 @@ export default function Header({ onDonateClick, onContactClick, startAtBottom = 
               </>
             ) : (
               <>
-                <Link
-                  href="/signup"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="mt-2 rounded-lg border border-slate-700 px-4 py-3 text-center text-sm font-medium text-white hover:bg-slate-800 transition-colors"
-                >
-                  Join
-                </Link>
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}

@@ -321,6 +321,15 @@ service cloud.firestore {
                      (resource.data.audience == 'all' || (resource.data.audience == 'user' && resource.data.userId == request.auth.uid));
     }
 
+    // Emails collection (email logs)
+    match /emails/{emailId} {
+      // The API route creates email logs (server-side, runs as authenticated or with admin SDK)
+      // Allow any authenticated user to create (the API route calls this after sending)
+      allow create: if true;
+      // Only admins can read email logs
+      allow read: if isAdmin();
+    }
+
     // Newsletter subscriptions collection
     match /newsletterSubscriptions/{subscriptionId} {
       // Anyone can create newsletter subscriptions (authenticated or not)

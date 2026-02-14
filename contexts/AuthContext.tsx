@@ -142,6 +142,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         link: '/dashboard/admin/users',
       })
     } catch (e) { /* non-critical */ }
+
+    // Send automated welcome email (non-blocking, non-critical)
+    try {
+      fetch('/api/email/welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, userId: user.uid }),
+      }).catch(() => {}) // fire-and-forget
+    } catch (e) { /* non-critical */ }
   }
 
   const signIn = async (email: string, password: string) => {
@@ -186,6 +195,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           message: `${user.displayName || user.email} signed up via Google.`,
           link: '/dashboard/admin/users',
         })
+      } catch (e) { /* non-critical */ }
+
+      // Send automated welcome email (non-blocking, non-critical)
+      try {
+        fetch('/api/email/welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: user.email,
+            name: user.displayName || user.email,
+            userId: user.uid,
+          }),
+        }).catch(() => {}) // fire-and-forget
       } catch (e) { /* non-critical */ }
     }
   }

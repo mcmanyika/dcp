@@ -325,6 +325,23 @@ export interface AdminNotification {
   createdAt: Timestamp | Date
 }
 
+// Email Log types
+export type EmailType = 'welcome' | 'membership_approved' | 'membership_rejected' | 'general'
+export type EmailStatus = 'sent' | 'failed'
+
+export interface EmailLog {
+  id: string
+  type: EmailType
+  to: string
+  name: string
+  subject: string
+  status: EmailStatus
+  resendId?: string        // ID returned by Resend
+  error?: string           // Error message if failed
+  userId?: string          // Associated user ID if available
+  createdAt: Timestamp | Date
+}
+
 // Ensure this file is treated as a module
 export { }
 

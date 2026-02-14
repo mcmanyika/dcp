@@ -16,7 +16,7 @@ import {
   arrayUnion,
 } from 'firebase/firestore'
 import { db } from './config'
-import type { UserProfile, Donation, Membership, ContactSubmission, Purchase, Product, UserRole, News, CartItem, VolunteerApplication, VolunteerApplicationStatus, Petition, PetitionSignature, ShipmentStatus, NewsletterSubscription, Banner, GalleryCategory, GalleryImage, Survey, SurveyResponse, MembershipApplication, MembershipApplicationStatus, AdminNotification, NotificationType, NotificationAudience } from '@/types'
+import type { UserProfile, Donation, Membership, ContactSubmission, Purchase, Product, UserRole, News, CartItem, VolunteerApplication, VolunteerApplicationStatus, Petition, PetitionSignature, ShipmentStatus, NewsletterSubscription, Banner, GalleryCategory, GalleryImage, Survey, SurveyResponse, MembershipApplication, MembershipApplicationStatus, AdminNotification, NotificationType, NotificationAudience, EmailLog, EmailType, EmailStatus } from '@/types'
 
 // Helper functions
 function requireDb() {
@@ -2354,5 +2354,49 @@ export async function markUserNotificationsRead(userId: string, notificationIds:
     await batch.commit()
   } catch (error: any) {
     console.error('Error marking user notifications as read:', error)
+  }
+}
+
+// ─── Email Log Operations ─────────────────────────────────────────
+export async function createEmailLog(emailLog: Omit<EmailLog, 'id' | 'createdAt'>): Promise<string> {
+  const db = requireDb()
+  const emailRef = doc(collection(db, 'emails'))
+
+  try {
+    const emailData = {
+      ...emailLog,
+      id: emailRef.id,
+      createdAt: Timestamp.now(),
+    }
+
+    await setDoc(emailRef, emailData)
+    return emailRef.id
+  } catch (error: any) {
+    console.error('Error creating email log:', error)
+    return ''
+  }
+}
+
+export async function getEmailLogs(limitCount: number = 50): Promise<EmailLog[]> {
+  if (!db) return []
+
+  try {
+    const q = query(
+      collection(db, 'emails'),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map((docSnap) => {
+      const data = docSnap.data()
+      return {
+        ...data,
+        id: docSnap.id,
+        createdAt: toDate(data.createdAt),
+      } as EmailLog
+    })
+  } catch (error: any) {
+    console.error('Error fetching email logs:', error)
+    return []
   }
 }

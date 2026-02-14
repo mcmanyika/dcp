@@ -16,7 +16,7 @@ export default function SignupForm() {
   const { signUp, signInWithGoogle } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const returnUrl = searchParams.get('returnUrl') || '/dashboard'
+  const returnUrl = searchParams.get('returnUrl')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,7 +37,9 @@ export default function SignupForm() {
 
     try {
       await signUp(formData.email, formData.password, formData.name)
-      router.push(returnUrl)
+      // Always show welcome page first for new signups, pass original returnUrl so they can continue after
+      const welcomeUrl = returnUrl ? `/welcome?next=${encodeURIComponent(returnUrl)}` : '/welcome'
+      router.push(welcomeUrl)
     } catch (err: any) {
       let errorMessage = err.message || 'Failed to create account'
       
@@ -65,7 +67,8 @@ export default function SignupForm() {
     setLoading(true)
     try {
       await signInWithGoogle()
-      router.push(returnUrl)
+      const welcomeUrl = returnUrl ? `/welcome?next=${encodeURIComponent(returnUrl)}` : '/welcome'
+      router.push(welcomeUrl)
     } catch (err: any) {
       setError(err.message || 'Failed to sign in with Google')
     } finally {

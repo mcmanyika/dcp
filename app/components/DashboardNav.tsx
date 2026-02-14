@@ -174,6 +174,7 @@ const adminManageItems: NavItem[] = [
   { href: '/dashboard/admin/orders', label: 'Orders', icon: <IconCube />, description: 'Order management' },
   { href: '/dashboard/admin/volunteers', label: 'Volunteers', icon: <IconUserGroup />, description: 'Applications' },
   { href: '/dashboard/admin/contacts', label: 'Contact', icon: <IconEnvelope />, description: 'Messages received' },
+  { href: '/dashboard/admin/emails', label: 'Emails', icon: <IconEnvelope />, description: 'Sent email logs' },
 ]
 
 export default function DashboardNav() {
