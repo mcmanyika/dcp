@@ -5,8 +5,8 @@ import ProtectedRoute from '@/app/components/ProtectedRoute'
 import DashboardNav from '@/app/components/DashboardNav'
 import MembershipCard from '@/app/components/MembershipCard'
 import { useAuth } from '@/contexts/AuthContext'
-import { getPurchasesByUser, getProductById, getAllUsers, getNews, getPetitions, getProducts, getAllPurchases, getAllVolunteerApplications } from '@/lib/firebase/firestore'
-import type { Purchase, Product, UserProfile as UserProfileType, News, Petition, VolunteerApplication } from '@/types'
+import { getPurchasesByUser, getProductById, getAllUsers, getNews, getPetitions, getProducts, getAllPurchases, getAllVolunteerApplications, getAllDonations } from '@/lib/firebase/firestore'
+import type { Purchase, Product, UserProfile as UserProfileType, News, Petition, Donation, VolunteerApplication } from '@/types'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 
@@ -79,6 +79,7 @@ function DashboardContent() {
     totalPetitions: number
     totalProducts: number
     totalOrders: number
+    totalDonations: number
     totalVolunteers: number
     totalRevenue: number
   } | null>(null)
@@ -87,6 +88,7 @@ function DashboardContent() {
     articles: News[]
     petitions: Petition[]
     purchases: Purchase[]
+    donations: Donation[]
     volunteers: VolunteerApplication[]
   } | null>(null)
   const [statsLoading, setStatsLoading] = useState(false)
@@ -98,18 +100,25 @@ function DashboardContent() {
     const fetchStats = async () => {
       setStatsLoading(true)
       try {
-        const [users, articles, petitions, products, orders, volunteers] = await Promise.all([
+        const [users, articles, petitions, products, orders, donations, volunteers] = await Promise.all([
           getAllUsers(),
           getNews(false),
           getPetitions(false, false),
           getProducts(),
           getAllPurchases(),
+          getAllDonations(),
           getAllVolunteerApplications(),
         ])
 
-        const totalRevenue = orders
+        const orderRevenue = orders
           .filter(o => o.status === 'succeeded')
           .reduce((sum, o) => sum + o.amount, 0)
+
+        const donationRevenue = donations
+          .filter(d => d.status === 'succeeded')
+          .reduce((sum, d) => sum + d.amount, 0)
+
+        const totalRevenue = orderRevenue + donationRevenue
 
         setSiteStats({
           totalUsers: users.length,
@@ -117,6 +126,7 @@ function DashboardContent() {
           totalPetitions: petitions.length,
           totalProducts: products.length,
           totalOrders: orders.length,
+          totalDonations: donations.length,
           totalVolunteers: volunteers.length,
           totalRevenue,
         })
@@ -125,6 +135,7 @@ function DashboardContent() {
           articles,
           petitions,
           purchases: orders,
+          donations,
           volunteers,
         })
       } catch (err) {
@@ -320,7 +331,7 @@ function DashboardContent() {
               <div className="inline-block h-6 w-6 animate-spin rounded-full border-3 border-solid border-slate-900 border-r-transparent"></div>
             </div>
           ) : siteStats ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
               <div className="rounded-lg bg-slate-50 p-4 text-center">
                 <p className="text-2xl font-bold text-slate-900">{siteStats.totalUsers}</p>
                 <p className="text-xs text-slate-500 mt-1">Users</p>
@@ -342,6 +353,10 @@ function DashboardContent() {
                 <p className="text-xs text-slate-500 mt-1">Orders</p>
               </div>
               <div className="rounded-lg bg-slate-50 p-4 text-center">
+                <p className="text-2xl font-bold text-emerald-600">{siteStats.totalDonations}</p>
+                <p className="text-xs text-slate-500 mt-1">Donations</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-4 text-center">
                 <p className="text-2xl font-bold text-slate-900">{siteStats.totalVolunteers}</p>
                 <p className="text-xs text-slate-500 mt-1">Volunteers</p>
               </div>
@@ -360,6 +375,7 @@ function DashboardContent() {
                 articles={rawData.articles}
                 petitions={rawData.petitions}
                 purchases={rawData.purchases}
+                donations={rawData.donations}
                 volunteers={rawData.volunteers}
               />
             </div>

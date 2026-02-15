@@ -18,13 +18,14 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import type { UserProfile, Purchase, News, Petition, VolunteerApplication } from '@/types'
+import type { UserProfile, Purchase, Donation, News, Petition, VolunteerApplication } from '@/types'
 
 interface AdminChartsProps {
   users: UserProfile[]
   articles: News[]
   petitions: Petition[]
   purchases: Purchase[]
+  donations?: Donation[]
   volunteers: VolunteerApplication[]
 }
 
@@ -58,7 +59,7 @@ const VOLUNTEER_STATUS_COLORS: Record<string, string> = {
   withdrawn: '#94a3b8',
 }
 
-export default function AdminCharts({ users, articles, petitions, purchases, volunteers }: AdminChartsProps) {
+export default function AdminCharts({ users, articles, petitions, purchases, donations = [], volunteers }: AdminChartsProps) {
   // 1. User Growth Over Time (last 6 months)
   const userGrowthData = useMemo(() => {
     const now = new Date()
@@ -94,7 +95,7 @@ export default function AdminCharts({ users, articles, petitions, purchases, vol
     })
   }, [users])
 
-  // 2. Revenue Over Time (last 6 months)
+  // 2. Revenue Over Time (last 6 months) — includes orders + donations
   const revenueData = useMemo(() => {
     const now = new Date()
     const months: { key: string; label: string }[] = []
@@ -103,29 +104,43 @@ export default function AdminCharts({ users, articles, petitions, purchases, vol
       months.push({ key: getMonthKey(d), label: getMonthLabel(d) })
     }
 
-    const revenueByMonth: Record<string, number> = {}
-    const ordersByMonth: Record<string, number> = {}
+    const orderRevenueByMonth: Record<string, number> = {}
+    const donationRevenueByMonth: Record<string, number> = {}
+    const transactionsByMonth: Record<string, number> = {}
     months.forEach(m => {
-      revenueByMonth[m.key] = 0
-      ordersByMonth[m.key] = 0
+      orderRevenueByMonth[m.key] = 0
+      donationRevenueByMonth[m.key] = 0
+      transactionsByMonth[m.key] = 0
     })
 
     purchases.forEach(p => {
       if (p.status !== 'succeeded') return
       const date = toDateSafe(p.createdAt)
       const key = getMonthKey(date)
-      if (revenueByMonth[key] !== undefined) {
-        revenueByMonth[key] += p.amount
-        ordersByMonth[key]++
+      if (orderRevenueByMonth[key] !== undefined) {
+        orderRevenueByMonth[key] += p.amount
+        transactionsByMonth[key]++
+      }
+    })
+
+    donations.forEach(d => {
+      if (d.status !== 'succeeded') return
+      const date = toDateSafe(d.createdAt)
+      const key = getMonthKey(date)
+      if (donationRevenueByMonth[key] !== undefined) {
+        donationRevenueByMonth[key] += d.amount
+        transactionsByMonth[key]++
       }
     })
 
     return months.map(m => ({
       month: m.label,
-      revenue: Math.round(revenueByMonth[m.key] * 100) / 100,
-      orders: ordersByMonth[m.key],
+      revenue: Math.round((orderRevenueByMonth[m.key] + donationRevenueByMonth[m.key]) * 100) / 100,
+      orders: Math.round(orderRevenueByMonth[m.key] * 100) / 100,
+      donations: Math.round(donationRevenueByMonth[m.key] * 100) / 100,
+      transactions: transactionsByMonth[m.key],
     }))
-  }, [purchases])
+  }, [purchases, donations])
 
   // 3. Order Status Distribution
   const orderStatusData = useMemo(() => {
@@ -281,7 +296,9 @@ export default function AdminCharts({ users, articles, petitions, purchases, vol
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} />
                 <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={(v) => `$${v}`} />
                 <Tooltip content={<CurrencyTooltip />} />
-                <Bar dataKey="revenue" name="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Legend iconType="square" wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="orders" name="Orders" stackId="revenue" fill="#0f172a" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="donations" name="Donations" stackId="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

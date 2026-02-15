@@ -170,6 +170,7 @@ function IconIdentification({ className = 'h-5 w-5' }: { className?: string }) {
 const adminManageItems: NavItem[] = [
   { href: '/dashboard/admin/users', label: 'Users', icon: <IconUsers />, description: 'User accounts & roles' },
   { href: '/dashboard/admin/membership-applications', label: 'Applications', icon: <IconIdentification />, description: 'Membership applications' },
+  { href: '/dashboard/admin/donations', label: 'Donations', icon: <IconHeart />, description: 'All donations' },
   { href: '/dashboard/admin/products', label: 'Products', icon: <IconShoppingBag />, description: 'Shop inventory' },
   { href: '/dashboard/admin/orders', label: 'Orders', icon: <IconCube />, description: 'Order management' },
   { href: '/dashboard/admin/volunteers', label: 'Volunteers', icon: <IconUserGroup />, description: 'Applications' },

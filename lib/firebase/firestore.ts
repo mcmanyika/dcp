@@ -101,8 +101,25 @@ export async function getDonationsByUser(userId: string): Promise<Donation[]> {
     return []
   }
 
+  const mapDocs = (snapshot: any): Donation[] => {
+    const donations = snapshot.docs.map((d: any) => ({
+      ...d.data(),
+      id: d.id, // always use Firestore doc ID
+      createdAt: toDate(d.data().createdAt),
+    })) as Donation[]
+
+    // Sort by createdAt descending
+    donations.sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt as any).getTime()
+      const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt as any).getTime()
+      return dateB - dateA
+    })
+
+    return donations
+  }
+
+  // Strategy 1: Query with orderBy (requires composite index)
   try {
-    // Try query with orderBy first (requires composite index)
     const q = query(
       collection(db, 'donations'),
       where('userId', '==', userId),
@@ -110,58 +127,36 @@ export async function getDonationsByUser(userId: string): Promise<Donation[]> {
       limit(50)
     )
     const snapshot = await getDocs(q)
-    const donations = snapshot.docs.map((doc) => ({
-      ...doc.data(),
-      createdAt: toDate(doc.data().createdAt),
-    })) as Donation[]
-
-    // Sort by createdAt in case index isn't ready (fallback)
-    donations.sort((a, b) => {
-      const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt as any).getTime()
-      const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt as any).getTime()
-      return dateB - dateA // Descending order
-    })
-
-    console.log(`Found ${donations.length} donations for user ${userId}`)
-    return donations
+    console.log(`Found ${snapshot.docs.length} donations for user ${userId} (indexed query)`)
+    return mapDocs(snapshot)
   } catch (error: any) {
-    // If index error, try without orderBy
-    if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
-      console.warn('Composite index not ready, trying query without orderBy:', error)
-      try {
-        const q = query(
-          collection(db, 'donations'),
-          where('userId', '==', userId),
-          limit(50)
-        )
-        const snapshot = await getDocs(q)
-        const donations = snapshot.docs.map((doc) => ({
-          ...doc.data(),
-          createdAt: toDate(doc.data().createdAt),
-        })) as Donation[]
+    console.warn('Donations indexed query failed:', error?.code, error?.message)
+  }
 
-        // Sort manually
-        donations.sort((a, b) => {
-          const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt as any).getTime()
-          const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt as any).getTime()
-          return dateB - dateA // Descending order
-        })
+  // Strategy 2: Query without orderBy (no composite index needed)
+  try {
+    const q = query(
+      collection(db, 'donations'),
+      where('userId', '==', userId),
+      limit(50)
+    )
+    const snapshot = await getDocs(q)
+    console.log(`Found ${snapshot.docs.length} donations for user ${userId} (simple query)`)
+    return mapDocs(snapshot)
+  } catch (error: any) {
+    console.warn('Donations simple query failed:', error?.code, error?.message)
+  }
 
-        console.log(`Found ${donations.length} donations for user ${userId} (without index)`)
-        return donations
-      } catch (fallbackError: any) {
-        console.error('Error in fallback query:', fallbackError)
-        throw fallbackError
-      }
-    }
-
-    console.error('Error in getDonationsByUser:', {
-      error,
-      code: error?.code,
-      message: error?.message,
-      userId,
-    })
-    throw error
+  // Strategy 3: Fetch ALL donations and filter client-side (last resort, admin-only fallback)
+  try {
+    const snapshot = await getDocs(collection(db, 'donations'))
+    const allDonations = mapDocs(snapshot)
+    const userDonations = allDonations.filter(d => d.userId === userId)
+    console.log(`Found ${userDonations.length} donations for user ${userId} (full scan fallback)`)
+    return userDonations
+  } catch (error: any) {
+    console.error('All donation query strategies failed:', error?.code, error?.message)
+    return []
   }
 }
 
@@ -178,6 +173,45 @@ export async function updateDonationStatus(
   status: Donation['status']
 ): Promise<void> {
   await updateDoc(doc(requireDb(), 'donations', donationId), { status })
+}
+
+export async function getAllDonations(): Promise<Donation[]> {
+  if (!db) {
+    console.warn('Firestore not initialized')
+    return []
+  }
+
+  try {
+    const q = query(
+      collection(db, 'donations'),
+      orderBy('createdAt', 'desc')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map((d) => ({
+      ...d.data(),
+      id: d.id,
+      createdAt: toDate(d.data().createdAt),
+    })) as Donation[]
+  } catch (error: any) {
+    console.warn('getAllDonations ordered query failed:', error?.code, error?.message)
+    // Fallback without orderBy
+    try {
+      const snapshot = await getDocs(collection(db, 'donations'))
+      const donations = snapshot.docs.map((d) => ({
+        ...d.data(),
+        id: d.id,
+        createdAt: toDate(d.data().createdAt),
+      })) as Donation[]
+      return donations.sort((a, b) => {
+        const aDate = a.createdAt instanceof Date ? a.createdAt.getTime() : 0
+        const bDate = b.createdAt instanceof Date ? b.createdAt.getTime() : 0
+        return bDate - aDate
+      })
+    } catch (fallbackError: any) {
+      console.error('getAllDonations fallback failed:', fallbackError?.code, fallbackError?.message)
+      return []
+    }
+  }
 }
 
 // Membership operations
